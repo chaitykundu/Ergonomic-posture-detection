@@ -1,0 +1,10 @@
+mediapipe==0.10.21
+opencv-python==4.11.0.86
+matplotlib
+numpy==1.26.4
+sounddevice==0.5.3
+jax==0.6.2 
+jaxlib==0.6.2 
+opencv-contrib-python==4.11.0.86 
+opt_einsum==3.4.0 
+sentencepiece==0.2.1 

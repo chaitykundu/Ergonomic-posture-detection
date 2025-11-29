@@ -1,0 +1,125 @@
+{
+  "iso_standard_id": "ISO 9241-5:2024",
+  "unit_of_measure": "degrees_and_cm",
+
+  "posture_metrics": {
+    "neck_flexion": {
+      "label": "Neck Flexion",
+      "metric": "angle_degrees",
+      "ideal": 0,
+      "min": 0,
+      "max": 25,
+      "warning_threshold": 30,
+      "direction": "positive_only",
+      "iso_clause": "5.2.1",
+      "iso_principle": "Maintain a neutral neck posture; avoid excessive flexion."
+    },
+
+    "upper_back_recline": {
+      "label": "Upper Back Recline",
+      "metric": "angle_degrees",
+      "ideal": 105,
+      "min": 100,
+      "max": 110,
+      "tolerance": 5,
+      "direction": "bi_directional",
+      "iso_clause": "5.2.2",
+      "iso_principle": "Support natural thoracic curvature and prevent excessive rounding."
+    },
+
+    "shoulder_elevation": {
+      "label": "Shoulder Elevation",
+      "metric": "angle_degrees",
+      "ideal": 0,
+      "min": 0,
+      "max": 20,
+      "tolerance": 5,
+      "direction": "positive_only",
+      "iso_clause": "5.2.2",
+      "iso_principle": "Keep shoulders relaxed and minimize elevation during tasks."
+    },
+
+    "elbow_angle": {
+      "label": "Elbow Angle",
+      "metric": "angle_degrees",
+      "ideal": 100,
+      "min": 90,
+      "max": 120,
+      "direction": "bi_directional",
+      "iso_clause": "5.6.3",
+      "iso_principle": "Maintain a comfortable open elbow posture with adequate arm support."
+    },
+
+    "wrist_deviation": {
+      "label": "Wrist Deviation",
+      "metric": "angle_degrees",
+      "ideal": 0,
+      "min": -10,
+      "max": 10,
+      "tolerance": 10,
+      "direction": "bi_directional",
+      "iso_clause": "5.6.3",
+      "iso_principle": "Maintain neutral wrist alignment; avoid sustained radial/ulnar deviation."
+    },
+
+    "pelvic_tilt": {
+      "label": "Pelvic Tilt",
+      "metric": "angle_degrees",
+      "ideal": 0,
+      "min": -10,
+      "max": 10,
+      "tolerance": 5,
+      "direction": "bi_directional",
+      "iso_clause": "5.2.2",
+      "iso_principle": "Ensure the chair and backrest provide support to maintain neutral pelvic positioning."
+    },
+
+    "viewing_distance": {
+      "label": "Viewing Distance",
+      "metric": "distance_cm",
+      "ideal": 70,
+      "min": 50,
+      "max": 100,
+      "direction": "positive_only",
+      "iso_clause": "5.4.3",
+      "iso_principle": "Maintain proper viewing distance to reduce visual strain and promote neutral posture."
+    },
+
+    "monitor_top_height": {
+      "label": "Monitor Top Height Relative to Eyes",
+      "metric": "relative_height_cm",
+      "ideal": 0,
+      "min": -5,
+      "max": 5,
+      "direction": "bi_directional",
+      "iso_clause": "5.4.3",
+      "iso_principle": "Ensure the monitor top is level with or slightly below eye height to minimize neck flexion."
+    }
+  },
+
+  "compliance_levels": {
+    "green": {
+      "description": "ISO-Compliant. Minimal deviation from recommended posture.",
+      "max_deviation_deg": 5,
+      "max_deviation_cm": 5
+    },
+    "yellow": {
+      "description": "Minor ISO Deviation. Corrective action advised.",
+      "max_deviation_deg": 15,
+      "max_deviation_cm": 15
+    },
+    "red": {
+      "description": "Major ISO Deviation. High risk of strain; requires immediate correction.",
+      "min_deviation_deg": 15,
+      "min_deviation_cm": 15
+    }
+  },
+
+  "llm_meta": {
+    "include_iso_references": true,
+    "include_biomechanics": true,
+    "include_ergonomic_rationale": true,
+    "include_safety_cues": true,
+    "include_psychological_nudge": true
+  }
+}

@@ -1,0 +1,83 @@
+{
+  "iso_standard_id": "ISO 9241-5:2024",
+  "workstation_component_rules": {
+    
+    // --- 1. MONITOR / VDU (Visual Display Unit) ---
+    "monitor": {
+      "detection_class": "Monitor",
+      "metric_unit": "pixels_or_cm",
+      "requirements": [
+        {
+          "check_id": "MonitorHeight",
+          "iso_principle": "Top of screen at or slightly below eye level (neutral neck).",
+          "human_anchor": "Eye_Keypoint_Y",
+          "object_anchor": "Monitor_Top_Y",
+          "delta_max_tolerance": 20, // Max acceptable height difference (e.g., 20 pixels/units)
+          "severity_map": {
+            "Red": "monitor_top_y > eye_keypoint_y + 50" // Monitor too low/high by large margin
+          }
+        },
+        {
+          "check_id": "ViewingDistance",
+          "iso_principle": "Maintain 50 cm to 100 cm distance from eyes.",
+          "human_anchor": "Eye_Keypoint_X_Z", // Requires 3D data
+          "object_anchor": "Monitor_Center_X_Z",
+          "min_cm": 50,
+          "max_cm": 100
+        }
+      ]
+    },
+    
+    // --- 2. WORKSURFACE / DESK ---
+    "worksurface": {
+      "detection_class": "Desk",
+      "metric_unit": "pixels_or_cm",
+      "requirements": [
+        {
+          "check_id": "WorksurfaceHeight",
+          "iso_principle": "Height must align with resting elbow height (90°-120° angle).",
+          "human_anchor": "Elbow_Keypoint_Y",
+          "object_anchor": "Worksurface_Top_Y",
+          "delta_max_tolerance": 30, // Max acceptable height difference
+          "severity_map": {
+            "Yellow": "abs(worksurface_top_y - elbow_keypoint_y) > 30"
+          }
+        },
+        {
+          "check_id": "ThighClearance",
+          "iso_principle": "Adequate clearance for thighs and movement.",
+          "human_anchor": "Thigh_Keypoint_Y",
+          "object_anchor": "Worksurface_Bottom_Y",
+          "min_clearance_cm": 15 // Example minimum clearance value
+        }
+      ]
+    },
+    
+    // --- 3. CHAIR AND BACKREST ---
+    "chair": {
+      "detection_class": "Chair",
+      "metric_unit": "angle_degrees",
+      "requirements": [
+        {
+          "check_id": "SeatDepth",
+          "iso_principle": "Seat depth must allow space between the edge and the back of the knee (approx. 5cm).",
+          "human_anchor": "Knee_Back_Keypoint_X",
+          "object_anchor": "Seat_Edge_X",
+          "min_gap_cm": 5
+        }
+      ]
+    }
+  },
+  
+  "correction_guidance": {
+    "MonitorHeight_Low": "Raise the monitor using a stand or adjustable arm to bring the screen top to eye level.",
+    "MonitorHeight_High": "Lower the monitor and/or raise your chair/desk height to align with a neutral neck.",
+    "ElbowSupport_Low": "Raise your chair height until your elbows are at desk level, or use a keyboard tray.",
+    "ElbowSupport_High": "Lower your desk or chair height; your shoulders appear hunched to reach the keyboard."
+  },
+  
+  "links": {
+    "monitor_placement_iso": "ISO 9241-5:2024, Section 4.5",
+    "arm_support_iso": "ISO 9241-5:2024, Section 4.3"
+  }
+}
