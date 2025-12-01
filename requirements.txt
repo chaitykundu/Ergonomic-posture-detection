@@ -8,3 +8,6 @@ jaxlib==0.6.2
 opencv-contrib-python==4.11.0.86 
 opt_einsum==3.4.0 
 sentencepiece==0.2.1 
+ultralytics==8.3.233
+ultralytics-thop==2.0.18
+polars==1.35.2 
