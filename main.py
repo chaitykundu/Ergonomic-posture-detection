@@ -23,7 +23,8 @@ mp_drawing = mp.solutions.drawing_utils
 
 def merge_iso_reports(posture_report, workstation_report):
     """
-    Create a single unified ISO report used by AI, PDF, dashboard, etc.
+    Merge posture + workstation results into one unified JSON.
+    This is used for LLM correction engine (Phase 4) and reporting.
     """
 
     final_output = {
@@ -32,14 +33,18 @@ def merge_iso_reports(posture_report, workstation_report):
         "overall_severity": "green"
     }
 
-    # Add posture metrics
+    # -------------------------------
+    # POSTURE METRICS
+    # -------------------------------
     for key, data in posture_report.items():
         final_output["posture"][key] = {
             "angle": data["angle"],
             "severity": data["severity"]
         }
 
-    # Add workstation metrics
+    # -------------------------------
+    # WORKSTATION METRICS
+    # -------------------------------
     for comp, rules in workstation_report.items():
         final_output["workstation"][comp] = {}
         for rule_id, rule_data in rules.items():
@@ -49,19 +54,21 @@ def merge_iso_reports(posture_report, workstation_report):
                 "iso_clause": rule_data["iso_principle"]
             }
 
-    # Calculate overall severity
-    all_severities = []
+    # -------------------------------
+    # OVERALL SEVERITY (red > yellow > green)
+    # -------------------------------
+    severities = []
 
-    for key, data in posture_report.items():
-        all_severities.append(data["severity"])
+    for data in posture_report.values():
+        severities.append(data["severity"])
 
-    for comp, rules in workstation_report.items():
-        for rule_id, rule_data in rules.items():
-            all_severities.append(rule_data["severity"])
+    for rules in workstation_report.values():
+        for rule in rules.values():
+            severities.append(rule["severity"])
 
-    if "red" in all_severities:
+    if "red" in severities:
         final_output["overall_severity"] = "red"
-    elif "yellow" in all_severities:
+    elif "yellow" in severities:
         final_output["overall_severity"] = "yellow"
     else:
         final_output["overall_severity"] = "green"
@@ -69,6 +76,10 @@ def merge_iso_reports(posture_report, workstation_report):
     return final_output
 
 
+
+# =====================================
+# ⭐ MAIN REAL-TIME SYSTEM
+# =====================================
 
 def run_postura_iso():
     cap = cv2.VideoCapture(0)
@@ -80,10 +91,16 @@ def run_postura_iso():
         min_detection_confidence=0.5,
         min_tracking_confidence=0.5
     ) as pose:
+
         while True:
             ret, frame = cap.read()
-            if not ret:
-                break
+
+            # Safety check
+            if not ret or frame is None:
+                continue
+
+            # 🟢 Resize webcam frame for YOLO STABILITY
+            frame = cv2.resize(frame, (960, 720))
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             results = pose.process(frame_rgb)
@@ -92,56 +109,50 @@ def run_postura_iso():
             workstation_report = {}
 
             # --------------------------------
-            # 1️⃣ Pose / Posture (Phase 1)
+            # 1️⃣ Phase-1: POSTURE DETECTION
             # --------------------------------
             if results.pose_landmarks:
                 lm = results.pose_landmarks.landmark
                 h, w, _ = frame.shape
 
-                # posture metrics
                 posture_report = get_posture_report(lm, w, h)
 
-                # draw skeleton
+                # Draw human body
                 mp_drawing.draw_landmarks(
                     frame,
                     results.pose_landmarks,
                     mp_pose.POSE_CONNECTIONS
                 )
 
-                # posture anchors for workstation rules
+                # Anchors used by workstation evaluation
                 anchors = compute_posture_anchors(lm, frame.shape)
             else:
                 anchors = None
 
             # --------------------------------
-            # 2️⃣ Object detection (Phase 2)
+            # 2️⃣ Phase-2: OBJECT DETECTION
             # --------------------------------
             components_raw = detect_workstation_objects_raw(frame)
 
             # --------------------------------
-            # 3️⃣ Single-person workstation association
+            # 3️⃣ Phase-2: SINGLE PERSON FILTER
             # --------------------------------
             if anchors is not None:
-                components = filter_workstation_for_person(
-                    components_raw, anchors, frame.shape
-                )
-
-                workstation_report = evaluate_workstation_iso(
-                    components, anchors, frame.shape
-                )
+                components = filter_workstation_for_person(components_raw, anchors, frame.shape)
+                workstation_report = evaluate_workstation_iso(components, anchors, frame.shape)
 
             # --------------------------------
-            # ⭐ 4️⃣ Phase 3 – Unified ISO Output
+            # ⭐ 4️⃣ Phase-3: UNIFIED ISO OUTPUT
             # --------------------------------
             unified_iso_output = merge_iso_reports(posture_report, workstation_report)
 
-            # Print unified JSON in terminal (LLM-ready)
+            # Print nicely formatted result
             print("\n=== Unified ISO Output ===")
             print(json.dumps(unified_iso_output, indent=4))
 
 
             # --------------------------------
-            # 5️⃣ Draw overlay
+            # 5️⃣ DRAW OVERLAY ON FRAME
             # --------------------------------
             y = 25
             cv2.putText(frame, "[Posture]", (10, y),
@@ -171,7 +182,7 @@ def run_postura_iso():
                                 (25, y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
                     y += 18
 
-            cv2.imshow("POSTURA – ISO Posture + Workstation (Unified Output)", frame)
+            cv2.imshow("POSTURA – Full ISO Engine (Posture + Workstation + Unified Output)", frame)
 
             if cv2.waitKey(1) & 0xFF == ord("q"):
                 break

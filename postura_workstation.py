@@ -82,17 +82,51 @@ def compute_posture_anchors(pose_landmarks, frame_shape):
 # 4. YOLO Object Detection (raw)
 # ================================
 def detect_workstation_objects_raw(frame):
-    results = yolo_model(frame, conf=0.5, verbose=False)[0]
+    """
+    Safe YOLO inference function:
+    - Checks for empty frame
+    - Resizes frame to safe size (640x480)
+    - Scales boxes back to original size
+    - Prevents PyTorch convolution errors
+    """
+
+    # 1️⃣ Safety check to avoid YOLO crash
+    if frame is None or frame.size == 0:
+        return {"monitor": [], "worksurface": [], "chair": []}
+
+    original_h, original_w = frame.shape[:2]
+
+    # 2️⃣ Resize for YOLO stability
+    resized = cv2.resize(frame, (640, 480))
+
+    try:
+        results = yolo_model(resized, conf=0.5, verbose=False)[0]
+    except Exception as e:
+        print("YOLO failed:", e)
+        return {"monitor": [], "worksurface": [], "chair": []}
+
     components_raw = {"monitor": [], "worksurface": [], "chair": []}
 
+    # 3️⃣ Scaling factors back to original frame size
+    scale_x = original_w / 640
+    scale_y = original_h / 480
+
+    # 4️⃣ Extract YOLO boxes
     for box in results.boxes:
         cls_id = int(box.cls[0])
         cls_name = results.names[cls_id]
-        x1, y1, x2, y2 = map(int, box.xyxy[0])
 
-        # Debug draw
+        x1, y1, x2, y2 = box.xyxy[0]
+
+        # Scale to original frame
+        x1 = int(x1 * scale_x)
+        x2 = int(x2 * scale_x)
+        y1 = int(y1 * scale_y)
+        y2 = int(y2 * scale_y)
+
+        # Draw bounding box
         cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 220, 0), 2)
-        cv2.putText(frame, cls_name, (x1, y1-4),
+        cv2.putText(frame, cls_name, (x1, y1 - 4),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 220, 0), 1)
 
         # Map object classes
@@ -106,6 +140,7 @@ def detect_workstation_objects_raw(frame):
             components_raw["chair"].append((x1, y1, x2, y2))
 
     return components_raw
+
 
 
 # ================================
