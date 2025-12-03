@@ -4,7 +4,7 @@ import numpy as np
 import json
 
 # Load ISO posture config
-iso_config = json.load(open("iso_posture_config.json", "r"))
+iso_config = json.load(open("files/iso_posture_config.json", "r"))
 
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils

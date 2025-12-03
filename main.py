@@ -3,10 +3,10 @@ import mediapipe as mp
 import json
 
 # Phase 1 – posture ISO engine
-from webcam_detector import get_posture_report
+from posture_ai.webcam_detector import get_posture_report
 
 # Phase 2 – workstation ISO engine
-from postura_workstation import (
+from posture_ai.postura_workstation import (
     compute_posture_anchors,
     detect_workstation_objects_raw,
     filter_workstation_for_person,
