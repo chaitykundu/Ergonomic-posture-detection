@@ -1,24 +1,23 @@
 import json
 import os
-from openai import OpenAI
-from dotenv import load_dotenv
 import openai
+from dotenv import load_dotenv
 
-# Load .env
+# Load .env file
 load_dotenv()
 
-# API key
+# Read API key from environment
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 if not OPENAI_API_KEY:
-    raise ValueError("❌ OPENAI_API_KEY missing in .env file.")
+    raise ValueError("❌ OPENAI_API_KEY not found. Please set it in your .env file.")
 
-# Initialize OpenAI client
-client = OpenAI(api_key=OPENAI_API_KEY)
+# Set OpenAI API key
+openai.api_key = OPENAI_API_KEY
 
 
 # -----------------------------
-# SYSTEM PROMPT FOR GPT MODELS
+# SYSTEM PROMPT FOR GPT-4.1
 # -----------------------------
 AI_SYSTEM_PROMPT = """
 You are POSTURA AI — a certified ergonomic assistant specializing in ISO 9241-5 posture and workstation evaluation.
@@ -48,6 +47,7 @@ JSON structure:
 }
 """
 
+
 # -----------------------------------------
 #  ★ Model Fallback Logic (Enterprise Safe)
 # -----------------------------------------
@@ -61,12 +61,12 @@ MODEL_PRIORITY = [
 def call_openai_model(model, messages):
     """Attempts a single OpenAI model call."""
     try:
-        return client.chat.completions.create(
+        return openai.ChatCompletion.create(
             model=model,
             messages=messages,
             temperature=0.2
         )
-    except openai.RateLimitError:
+    except openai.error.RateLimitError:
         print(f"⚠ Quota exceeded for {model}. Trying next model...")
         return None
     except Exception as e:
@@ -107,7 +107,7 @@ def generate_ergonomic_correction(unified_iso_report):
         return {"error": "All OpenAI models failed due to quota or connectivity issues."}
 
     # Extract text safely
-    raw_text = response.choices[0].message.content
+    raw_text = response['choices'][0]['message']['content']
 
     # Parse JSON output
     try:

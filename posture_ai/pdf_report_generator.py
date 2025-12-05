@@ -2,7 +2,6 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
 from PIL import Image
-
 import os
 import json
 
@@ -11,7 +10,7 @@ def add_section(c, title, content, y_position):
     c.setFont("Helvetica-Bold", 12)
     c.drawString(50, y_position, title)
     c.setFont("Helvetica", 10)
-    y_position -= 15
+    y_position -= 20  # Added more space between title and content
     for line in content.split("\n"):
         c.drawString(50, y_position, line)
         y_position -= 12
@@ -23,9 +22,9 @@ def generate_pdf_report(final_iso_report, ai_report, image_path="output/annotate
     output_pdf = "ergonomics_report.pdf"
     c = canvas.Canvas(output_pdf, pagesize=letter)
 
-    # Title
+    # Title (Centered)
     c.setFont("Helvetica-Bold", 16)
-    c.drawString(200, 750, "POSTURA - Ergonomics Evaluation Report")
+    c.drawCentredString(300, 750, "POSTURA - Ergonomics Evaluation Report")
 
     # Add Posture Analysis Section
     posture_content = ""
@@ -56,8 +55,12 @@ def generate_pdf_report(final_iso_report, ai_report, image_path="output/annotate
 
     # Add annotated image to PDF
     if os.path.exists(image_path):
-        image = Image.open(image_path)
-        c.drawImage(image_path, 50, y_position - 200, width=500, height=300)
+        # Dynamically adjust the image placement after the text
+        image_height = 300  # Image height
+        available_space = y_position - 50  # Space left before the bottom
+        image_y_position = available_space - image_height  # Place image just above the bottom
+
+        c.drawImage(image_path, 50, image_y_position, width=500, height=image_height)
     else:
         print("No annotated image found.")
 
@@ -66,5 +69,3 @@ def generate_pdf_report(final_iso_report, ai_report, image_path="output/annotate
 
     print(f"✅ Ergonomics PDF report saved as: {output_pdf}")
     return output_pdf
-
-
