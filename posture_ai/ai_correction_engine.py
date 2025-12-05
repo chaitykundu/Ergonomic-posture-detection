@@ -29,24 +29,24 @@ You will receive a JSON object containing:
 - overall severity
 
 Your responsibilities:
-1. Identify KEY ergonomic risks.
-2. Explain WHY each risk violates ISO 9241-5.
-3. Provide CLEAR posture corrections.
-4. Provide CLEAR workstation corrections.
-5. Provide 3–5 ergonomic exercises.
-6. Produce STRICT JSON output only.
+1. Identify KEY ergonomic risks (neck strain, wrist extension, etc.).
+2. Explain WHY each risk violates ISO 9241-5 (including posture and workstation issues).
+3. Provide **CLEAR** posture corrections.
+4. Provide **CLEAR** workstation corrections.
+5. Provide **3–5 ergonomic exercises** based on posture and workstation analysis.
+6. **Summarize the risk level** (red/yellow/green) for posture and workstation.
+7. Produce **STRICT JSON output only**, in the following format:
 
 JSON structure:
 {
   "posture_corrections": [],
   "workstation_corrections": [],
   "iso_explanations": [],
-  "risk_summary": "",
-  "exercise_recommendations": [],
-  "final_advice": ""
+  "risk_summary": "",  # Summary of identified risks (neck strain, wrist, etc.)
+  "exercise_recommendations": [],  # 3–5 exercises
+  "final_advice": ""  # Final advice to improve ergonomics
 }
 """
-
 
 # -----------------------------------------
 #  ★ Model Fallback Logic (Enterprise Safe)
@@ -72,7 +72,6 @@ def call_openai_model(model, messages):
     except Exception as e:
         print(f"⚠ Error calling {model}: {e}")
         return None
-
 
 
 def generate_ergonomic_correction(unified_iso_report):

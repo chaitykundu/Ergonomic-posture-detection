@@ -25,6 +25,11 @@ from posture_ai.unified_iso_engine import merge_iso_reports
 # ----------------------------------------
 from posture_ai.ai_correction_engine import generate_ergonomic_correction
 
+# ----------------------------------------
+# Phase 5 – PDF Report Generator
+# ----------------------------------------
+from posture_ai.pdf_report_generator import generate_pdf_report
+
 
 # ----------------------------------------
 # Main Image Analysis Function (Phase 1–4)
@@ -107,7 +112,7 @@ def analyze_image(image_path):
     print(json.dumps(ai_report, indent=4))
 
     # ----------------------------------------
-    # Save Annotated Image
+    # Phase 5 – PDF Report Generation
     # ----------------------------------------
     os.makedirs("output", exist_ok=True)
     timestamp = int(time.time())
@@ -117,6 +122,9 @@ def analyze_image(image_path):
         print(f"\n📸 Annotated image saved at: {output_file}")
     else:
         print("\n❌ Failed to save annotated image.")
+
+    # Now generate the PDF report with ISO results + AI corrections
+    generate_pdf_report(final_iso, ai_report, image_path=output_file)
 
     return final_iso, ai_report
 
