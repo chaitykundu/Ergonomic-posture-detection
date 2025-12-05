@@ -133,6 +133,6 @@ def analyze_image(image_path):
 # Script Entry Point
 # ----------------------------------------
 if __name__ == "__main__":
-    DEFAULT_IMAGE = "files/IMG2.jpg"
+    DEFAULT_IMAGE = "files/pose1.webp"
     print(f"🚀 Starting ISO Posture + Workstation + AI Analysis")
     analyze_image(DEFAULT_IMAGE)
