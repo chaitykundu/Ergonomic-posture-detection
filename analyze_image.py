@@ -19,6 +19,7 @@ from posture_ai.postura_workstation import (
 # Phase 3 – Unified ISO Output
 # ----------------------------------------
 from posture_ai.unified_iso_engine import merge_iso_reports
+from posture_ai.arrow_annotation import apply_correction_arrows
 
 # ----------------------------------------
 # Phase 4 – GPT-4.1 Ergonomic Correction Engine
@@ -75,11 +76,11 @@ def analyze_image(image_path):
         anchors = compute_posture_anchors(lm, frame.shape)
 
         # Draw skeleton
-        mp.solutions.drawing_utils.draw_landmarks(
-            frame,
-            results.pose_landmarks,
-            mp_pose.POSE_CONNECTIONS
-        )
+        #mp.solutions.drawing_utils.draw_landmarks(
+            #frame,
+           # results.pose_landmarks,
+           # mp_pose.POSE_CONNECTIONS
+        #)
 
     # ----------------------------------------
     # Phase 2 – Workstation Detection (YOLO)
@@ -93,6 +94,9 @@ def analyze_image(image_path):
     workstation_report = evaluate_workstation_iso(
         selected_components, anchors, frame.shape
     )
+
+    frame = apply_correction_arrows(frame, posture_report, workstation_report, lm, W, H)
+
 
     # ----------------------------------------
     # Phase 3 – Unified ISO Output

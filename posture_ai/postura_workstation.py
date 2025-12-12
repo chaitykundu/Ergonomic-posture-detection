@@ -125,12 +125,12 @@ def detect_workstation_objects_raw(frame):
         y2 = int(y2 * scale_y)
 
         # Draw bounding box
-        cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 220, 0), 2)
-        cv2.putText(frame, cls_name, (x1, y1 - 4),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 220, 0), 1)
+        #cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 220, 0), 2)
+        #cv2.putText(frame, cls_name, (x1, y1 - 4),
+                    #cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 220, 0), 1)
 
         # Map object classes
-        if cls_name in ["tv", "laptop", "monitor"]:
+        if cls_name in ["laptop", "monitor"]:
             components_raw["monitor"].append((x1, y1, x2, y2))
 
         if cls_name in ["table", "desk", "dining table"]:
