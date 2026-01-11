@@ -73,10 +73,5 @@
     "MonitorHeight_High": "Lower the monitor and/or raise your chair/desk height to align with a neutral neck.",
     "ElbowSupport_Low": "Raise your chair height until your elbows are at desk level, or use a keyboard tray.",
     "ElbowSupport_High": "Lower your desk or chair height; your shoulders appear hunched to reach the keyboard."
-  },
-  
-  "links": {
-    "monitor_placement_iso": "ISO 9241-5:2024, Section 4.5",
-    "arm_support_iso": "ISO 9241-5:2024, Section 4.3"
-  }
+  }  
 }

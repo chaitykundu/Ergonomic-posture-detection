@@ -8,7 +8,9 @@ from pathlib import Path
 # ================================
 # 1. Load ISO Workstation Config
 # ================================
-ISO_WORKSTATION_CONFIG_PATH = "files/iso_workstation_config.json"
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+ISO_WORKSTATION_CONFIG_PATH =  BASE_DIR / "files" / "iso_workstation_config.json"
 
 if not Path(ISO_WORKSTATION_CONFIG_PATH).exists():
     raise FileNotFoundError(f"{ISO_WORKSTATION_CONFIG_PATH} not found in current directory.")

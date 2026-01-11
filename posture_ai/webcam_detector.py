@@ -2,9 +2,11 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import json
+from pathlib import Path
 
 # Load ISO posture config
-iso_config = json.load(open("files/iso_posture_config.json", "r"))
+BASE_DIR = Path(__file__).resolve().parent.parent
+iso_config = json.load(open(BASE_DIR / "files" / "iso_posture_config.json", "r"))
 
 mp_pose = mp.solutions.pose
 mp_drawing = mp.solutions.drawing_utils

@@ -8,6 +8,7 @@ import time
 # Import Posture & Workstation Engines
 # ----------------------------------------
 from posture_ai.webcam_detector import get_posture_report
+from posture_ai.user_context_loader import load_user_context
 from posture_ai.postura_workstation import (
     compute_posture_anchors,
     detect_workstation_objects_raw,
@@ -31,16 +32,25 @@ from posture_ai.ai_correction_engine import generate_ergonomic_correction
 # ----------------------------------------
 from posture_ai.pdf_report_generator import generate_pdf_report
 
-
 # ----------------------------------------
 # Main Image Analysis Function (Phase 1–4)
 # ----------------------------------------
-def analyze_image(image_path):
+def analyze_image(user_context: dict):
 
     print("\n===================================================")
-    print(f"📸 Analyzing Image: {image_path}")
+    print("📸 Starting analysis from user context")
     print("===================================================\n")
 
+    # ----------------------------------------
+    # Extract image path from user context
+    # ----------------------------------------
+    image_path = user_context["image_data"]["image_path"]
+
+    if not os.path.exists(image_path):
+        raise FileNotFoundError(f"❌ Image not found: {image_path}")
+
+    print(f"📸 Image loaded from context: {image_path}")
+    
     # Load image
     frame = cv2.imread(image_path)
     if frame is None:
@@ -111,7 +121,7 @@ def analyze_image(image_path):
     # ----------------------------------------
     print("\n================ GPT-4.1 AI Correction ================")
 
-    ai_report = generate_ergonomic_correction(final_iso)
+    ai_report = generate_ergonomic_correction(final_iso, user_context)
 
     print(json.dumps(ai_report, indent=4))
 
@@ -137,6 +147,9 @@ def analyze_image(image_path):
 # Script Entry Point
 # ----------------------------------------
 if __name__ == "__main__":
-    DEFAULT_IMAGE = "files/pose1.webp"
-    print(f"🚀 Starting ISO Posture + Workstation + AI Analysis")
-    analyze_image(DEFAULT_IMAGE)
+    print("🚀 Starting ISO Posture + Workstation + AI Analysis")
+
+    USER_CONTEXT_PATH = "files/dummy.json"
+    user_context = load_user_context(USER_CONTEXT_PATH)
+
+    analyze_image(user_context)

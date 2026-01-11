@@ -120,7 +120,7 @@ def call_openai_model(model: str, messages):
 # --------------------------------------------------
 # 6. Main function used by your pipeline
 # --------------------------------------------------
-def generate_ergonomic_correction(unified_iso_report: dict) -> dict:
+def generate_ergonomic_correction(unified_iso_report: dict, user_context: dict) -> dict:
     """
     Phase-4 AI Correction Engine.
     Takes the unified ISO JSON (posture + workstation + severity)
@@ -128,9 +128,15 @@ def generate_ergonomic_correction(unified_iso_report: dict) -> dict:
     """
 
     user_input = (
-        "Here is the user's ISO posture + workstation evaluation:\n\n"
-        + json.dumps(unified_iso_report, indent=4)
-        + "\n\nReturn ONLY the JSON object described in the system prompt."
+    "User-reported health context (pre-assessment questionnaire):\n"
+    + json.dumps(user_context, indent=4)
+    + "\n\nISO posture + workstation evaluation:\n"
+    + json.dumps(unified_iso_report, indent=4)
+    + "\n\nIMPORTANT RULES:\n"
+    "- Give higher priority to body regions with higher pain intensity\n"
+    "- Escalate risk if pain intensity >= 7\n"
+    "- Align advice with both ISO violations AND reported symptoms\n"
+    "- Return ONLY the JSON object described in the system prompt"
     )
 
     messages = [
