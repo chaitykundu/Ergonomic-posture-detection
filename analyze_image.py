@@ -21,6 +21,8 @@ from posture_ai.postura_workstation import (
 # ----------------------------------------
 from posture_ai.unified_iso_engine import merge_iso_reports
 from posture_ai.arrow_annotation import apply_correction_arrows
+from posture_ai.compliance import calculate_compliance_percentage
+
 
 # ----------------------------------------
 # Phase 4 – GPT-4.1 Ergonomic Correction Engine
@@ -121,6 +123,9 @@ def analyze_image(user_context: dict):
     # Phase 3 – Unified ISO Output
     # ----------------------------------------
     final_iso = merge_iso_reports(posture_report, workstation_report)
+
+    compliance_report = calculate_compliance_percentage(final_iso)
+    final_iso["compliance"] = compliance_report
 
     print("\n================ Unified ISO Analysis ================")
     print(json.dumps(final_iso, indent=4))
