@@ -50,7 +50,7 @@ def analyze_image(user_context: dict):
         raise FileNotFoundError(f"❌ Image not found: {image_path}")
 
     print(f"📸 Image loaded from context: {image_path}")
-    
+
     # Load image
     frame = cv2.imread(image_path)
     if frame is None:
@@ -105,7 +105,16 @@ def analyze_image(user_context: dict):
         selected_components, anchors, frame.shape
     )
 
-    frame = apply_correction_arrows(frame, posture_report, workstation_report, lm, W, H)
+    try:
+        if posture_report and workstation_report:
+            print("🎨 Drawing correction arrows...")
+            frame = apply_correction_arrows(
+                frame, posture_report, workstation_report, lm, W, H
+            )
+    except Exception as e:
+        print(f"⚠️ Warning: Could not apply correction arrows: {e}")
+
+    #frame = apply_correction_arrows(frame, posture_report, workstation_report, lm, W, H)
 
 
     # ----------------------------------------
@@ -121,9 +130,14 @@ def analyze_image(user_context: dict):
     # ----------------------------------------
     print("\n================ GPT-4.1 AI Correction ================")
 
-    ai_report = generate_ergonomic_correction(final_iso, user_context)
-
-    print(json.dumps(ai_report, indent=4))
+    #ai_report = generate_ergonomic_correction(final_iso, user_context)
+    #print(json.dumps(ai_report, indent=4))
+    try:
+        ai_report = generate_ergonomic_correction(final_iso, user_context)
+        print(json.dumps(ai_report, indent=4))
+    except Exception as e:
+        print(f"⚠️ Warning: AI correction failed: {e}")
+        ai_report = {"error": str(e), "recommendations": []}
 
     # ----------------------------------------
     # Phase 5 – PDF Report Generation
@@ -138,7 +152,13 @@ def analyze_image(user_context: dict):
         print("\n❌ Failed to save annotated image.")
 
     # Now generate the PDF report with ISO results + AI corrections
-    generate_pdf_report(final_iso, ai_report, image_path=output_file)
+    #generate_pdf_report(final_iso, ai_report, image_path=output_file)
+
+    try:
+        generate_pdf_report(final_iso, ai_report, image_path=output_file)
+        print("✅ PDF report generated successfully")
+    except Exception as e:
+        print(f"⚠️ Warning: PDF generation failed: {e}")
 
     return final_iso, ai_report
 
