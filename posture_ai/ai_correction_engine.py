@@ -45,7 +45,7 @@ Your responsibilities:
   "iso_explanations": [],
   "risk_summary": "",
   "exercise_recommendations": [],
-  "final_advice": ""
+  #"final_advice": ""
 }
 """
 

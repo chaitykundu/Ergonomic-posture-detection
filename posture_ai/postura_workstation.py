@@ -213,6 +213,16 @@ def extract_object_anchor(anchor_name, box):
 def extract_human_anchor(anchor_name, anchors):
     return anchors.get(anchor_name)
 
+# ================================
+# Severity → ISO Status Mapping
+# ================================
+def severity_to_status(severity: str):
+    mapping = {
+        "green": "ideal",
+        "yellow": "warning",
+        "red": "violation"
+    }
+    return mapping.get(severity)
 
 # ================================
 # 7. Generic Rule Evaluation
@@ -220,25 +230,23 @@ def extract_human_anchor(anchor_name, anchors):
 def evaluate_rule_generic(rule, human_val, obj_val):
     report = {
         "severity": "green",
+        "status": "ideal",
         "delta": None,
         "iso_principle": rule["iso_principle"]
     }
 
     if human_val is None or obj_val is None:
         report["severity"] = "unknown"
+        report["status"] = None
         return report
 
-    # MUST BE NUMBERS HERE
     delta = float(obj_val - human_val)
     report["delta"] = delta
 
-    # Tolerance rule
     if "delta_max_tolerance" in rule:
-        tol = rule["delta_max_tolerance"]
-        if abs(delta) > tol:
+        if abs(delta) > rule["delta_max_tolerance"]:
             report["severity"] = "yellow"
 
-    # Severity map
     if "severity_map" in rule:
         ctx = {
             "monitor_top_y": obj_val,
@@ -252,16 +260,17 @@ def evaluate_rule_generic(rule, human_val, obj_val):
             except:
                 pass
 
-    # Clearance rules (pixel approximation)
-    if "min_clearance_cm" in rule:
-        if delta < rule["min_clearance_cm"]:
-            report["severity"] = "yellow"
+    if "min_clearance_cm" in rule and delta < rule["min_clearance_cm"]:
+        report["severity"] = "yellow"
 
-    if "min_gap_cm" in rule:
-        if delta < rule["min_gap_cm"]:
-            report["severity"] = "yellow"
+    if "min_gap_cm" in rule and delta < rule["min_gap_cm"]:
+        report["severity"] = "yellow"
+
+    # 🔥 THIS IS THE FIX
+    report["status"] = severity_to_status(report["severity"])
 
     return report
+
 
 
 # ================================
