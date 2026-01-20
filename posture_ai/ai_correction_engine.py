@@ -42,11 +42,46 @@ Your responsibilities:
 {
   "posture_corrections": [],
   "workstation_corrections": [],
-  "iso_explanations": [],
-  "risk_summary": "",
+  "corrections": [],
+  #"iso_explanations": [],
+  #"risk_summary": "",
+  "body_region_risks": {
+    "elbows": "low",
+    "shoulder": "medium",
+    "wrist": "high",
+    "lower_back": "medium"
+  },
   "exercise_recommendations": [],
+  "equipment_recommendations": [
+    {
+      "name": "Adjustable Monitor Riser",
+      "description": "Height-adjustable stand (8-12 cm range) to position monitor at eye level",
+      "priority": "high",
+      "improvement_percentage": "+40%",
+      #"target_issue": "neck strain",
+      #"price_range": "$25-$50",
+      #"why_recommended": "Your monitor is currently too low, causing 35° neck flexion. A monitor riser will bring it to eye level, reducing neck strain by 40%."
+    }
+  ]
   #"final_advice": ""
 }
+IMPORTANT RULES FOR EQUIPMENT RECOMMENDATIONS:
+- Priority levels: "high" (critical), "medium" (recommended), "low" (optional)
+- Improvement percentage: Estimate based on severity (e.g., "+40% improvement")
+- Be specific about measurements (e.g., "8-12 cm range", "10-15 cm height")
+- Prioritize based on pain intensity from user health context
+
+EQUIPMENT CATEGORIES TO CONSIDER:
+1. Monitor risers/arms (for neck/eye strain)
+2. Adjustable footrests (for lower back/leg support)
+3. Ergonomic keyboard/mouse (for wrist strain)
+4. Lumbar support cushions (for lower back pain)
+5. Armrest pads/risers (for shoulder/arm support)
+6. Standing desk converter (for prolonged sitting)
+7. Wrist rests (for carpal tunnel prevention)
+8. Document holders (for neck strain from looking down)
+
+Only recommend equipment that addresses ACTUAL detected issues from the analysis.
 """
 
 

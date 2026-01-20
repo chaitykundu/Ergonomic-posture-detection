@@ -134,12 +134,16 @@ def analyze_image(user_context: dict):
     # Phase 4 – GPT-4.1 Ergonomic Corrections
     # ----------------------------------------
     print("\n================ GPT-4.1 AI Correction ================")
-
-    #ai_report = generate_ergonomic_correction(final_iso, user_context)
-    #print(json.dumps(ai_report, indent=4))
     try:
         ai_report = generate_ergonomic_correction(final_iso, user_context)
+        posture_corrections = ai_report.pop("posture_corrections", [])
+        workstation_corrections = ai_report.pop("workstation_corrections", [])
+        ai_report.update({
+            "corrections": posture_corrections + workstation_corrections
+        })
+        print("my output ----------------------")
         print(json.dumps(ai_report, indent=4))
+        
     except Exception as e:
         print(f"⚠️ Warning: AI correction failed: {e}")
         ai_report = {"error": str(e), "recommendations": []}

@@ -3,11 +3,7 @@
     "user_id": "001",
 
     "image_data": {
-      "image_id": "IMG_001",
-      "image_path": "files/pose1.webp",
-      "image_type": "posture_front",
-      "posture_state": "sitting",
-      "captured_at": "2026-01-05T09:42:10"
+      "image_path": "files/IMG2.jpg"
     },
 
     "body_regions": ["neck", "upper_back", "wrists_hands"],
