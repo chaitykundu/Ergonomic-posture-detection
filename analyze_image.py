@@ -32,20 +32,17 @@ from posture_ai.ai_correction_engine import generate_ergonomic_correction
 # ----------------------------------------
 # Phase 5 – PDF Report Generator
 # ----------------------------------------
-from posture_ai.pdf_report_generator import generate_pdf_report
+#from posture_ai.pdf_report_generator import generate_pdf_report
 
 # ----------------------------------------
 # Main Image Analysis Function (Phase 1–4)
 # ----------------------------------------
 def analyze_image(user_context: dict):
-
+    print("user context", user_context)
     print("\n===================================================")
     print("📸 Starting analysis from user context")
     print("===================================================\n")
 
-    # ----------------------------------------
-    # Extract image path from user context
-    # ----------------------------------------
     image_path = user_context["image_data"]["image_path"]
 
     if not os.path.exists(image_path):
@@ -163,11 +160,11 @@ def analyze_image(user_context: dict):
     # Now generate the PDF report with ISO results + AI corrections
     #generate_pdf_report(final_iso, ai_report, image_path=output_file)
 
-    try:
-        generate_pdf_report(final_iso, ai_report, image_path=output_file)
-        print("✅ PDF report generated successfully")
-    except Exception as e:
-        print(f"⚠️ Warning: PDF generation failed: {e}")
+    #try:
+        #generate_pdf_report(final_iso, ai_report, image_path=output_file)
+        #print("✅ PDF report generated successfully")
+    #except Exception as e:
+        #print(f"⚠️ Warning: PDF generation failed: {e}")
 
     return final_iso, ai_report
 
