@@ -157,6 +157,9 @@ def analyze_image(user_context: dict):
     else:
         print("\n❌ Failed to save annotated image.")
 
+    annotated_image_url = f"/output/annotated_{timestamp}.jpg"
+    ai_report["annotated_image_url"] = annotated_image_url
+
     # Now generate the PDF report with ISO results + AI corrections
     #generate_pdf_report(final_iso, ai_report, image_path=output_file)
 
@@ -165,6 +168,9 @@ def analyze_image(user_context: dict):
         #print("✅ PDF report generated successfully")
     #except Exception as e:
         #print(f"⚠️ Warning: PDF generation failed: {e}")
+
+    #annotated_image_url = f"/output/annotated_{timestamp}.jpg"
+    #ai_report["annotated_image_url"] = annotated_image_url
 
     return final_iso, ai_report
 

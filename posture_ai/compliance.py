@@ -1,49 +1,37 @@
+SEVERITY_SCORE = {
+    "green": 1.0,
+    "yellow": 0.5,
+    "red": 0.0
+}
+
 def calculate_compliance_percentage(final_iso: dict):
-    """
-    Robust ISO 9241-5 compliance calculator.
-    Returns only overall compliance percentage.
-    """
-
-    def score_section(section: dict):
+    def score_items(items):
         total = 0
-        score = 0
+        score = 0.0
 
-        for _, item in section.items():
-
-            # 🚫 Skip raw numbers (numpy.float64, int, float)
-            if not isinstance(item, dict):
+        for item in items:
+            severity = item.get("severity")
+            if severity not in SEVERITY_SCORE:
                 continue
 
-            # ✅ Case 1: direct posture metric
-            if "status" in item:
-                total += 1
-                if item["status"] == "ideal":
-                    score += 1
-                elif item["status"] == "warning":
-                    score += 0.5
+            total += 1
+            score += SEVERITY_SCORE[severity]
 
-            # ✅ Case 2: nested workstation rules
-            else:
-                for _, rule in item.items():
+        return (score / total) * 100 if total else 0.0
 
-                    if not isinstance(rule, dict):
-                        continue
+    posture_items = final_iso.get("posture", {}).values()
 
-                    status = rule.get("status")
-                    if status is None:
-                        continue
+    workstation_items = []
+    for comp in final_iso.get("workstation", {}).values():
+        workstation_items.extend(comp.values())
 
-                    total += 1
-                    if status == "ideal":
-                        score += 1
-                    elif status == "warning":
-                        score += 0.5
+    posture_score = score_items(posture_items)
+    workstation_score = score_items(workstation_items)
 
-        return round((score / total) * 100, 1) if total else 0.0
+    overall = (posture_score + workstation_score) / 2
 
-    posture_score = score_section(final_iso.get("posture", {}))
-    workstation_score = score_section(final_iso.get("workstation", {}))
+    # ISO safety override (recommended)
+    if any(i.get("severity") == "red" for i in posture_items):
+        overall = min(overall, 40)
 
-    overall_score = round((posture_score + workstation_score) / 2, 1)
-
-    return overall_score
+    return round(overall, 1)

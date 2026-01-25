@@ -1,10 +1,11 @@
 import os
 import json
 from datetime import datetime
+from fastapi import Request
 
 import cv2
 import numpy as np
-
+from fastapi.staticfiles import StaticFiles
 from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -34,6 +35,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/output", StaticFiles(directory="output"), name="output")
+
 # Directories
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 UPLOAD_DIR = "static/uploads"
@@ -55,6 +58,7 @@ async def root():
 
 @app.post("/api/analyze-posture")
 async def upload_image(
+    #request: Request
     file: UploadFile = File(...),
     payload: str = Form(...)
 ):
@@ -87,3 +91,6 @@ async def upload_image(
         }
     except Exception as e:
         print("Error %s" % str(e))
+
+
+
