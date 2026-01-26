@@ -17,7 +17,10 @@ from typing import Dict, List
 
 BODY_REGION_MAP = {
     "neck": ["neck"],
-    "upper_back": ["upper_back", "shoulders"],
+    "upper_back": ["upper_back"],
+    "shoulders":["shoulders"],
+    "lower_back":["lower_back"],
+    "Elbows/Forearms":["Elbows","Forearms"],
     "wrists_hands": ["wrists"],
 }
 
@@ -36,11 +39,16 @@ def normalize_onboarding(onboarding: Dict) -> Dict:
         reverse=True
     )
 
-    condition_type = (
-        "acute"
-        if onboarding.get("duration_pattern") == "less_than_1_week"
-        else "chronic"
-    )
+    duration_code = onboarding.get("duration_pattern")
+
+    DURATION_TO_CONDITION = {
+        "Less than 1 week": "acute",
+        "1-6 weeks": "acute",
+        "More than 6 weeks": "chronic",
+        "ON_OFF_MONTHS": "chronic",
+    }
+
+    condition_type = DURATION_TO_CONDITION.get(duration_code, "chronic")
 
     return {
         "user_id": onboarding.get("user_id"),
@@ -173,7 +181,7 @@ def recommend_exercises(
     )
 
     return {
-        "user_id": normalized["user_id"],
+        #"user_id": normalized["user_id"],
         "condition_type": normalized["condition_type"],
         "focus_regions": resolved_regions,
         "recommended_session": [
