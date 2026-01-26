@@ -10,6 +10,10 @@ from fastapi import FastAPI, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 
 from analyze_image import analyze_image
+from posture_ai.exercise import recommend_exercises
+from dotenv import load_dotenv
+load_dotenv()
+from posture_ai.exercise_backend import fetch_exercises_from_backend
 # from posture_ai.pdf_report_generator import generate_pdf_report
 
 
@@ -93,4 +97,35 @@ async def upload_image(
         print("Error %s" % str(e))
 
 
+@app.post("/api/analyze-exercises")
+async def analyze_exercises(
+    payload: str = Form(...)
+):
+    print("sent exercise payload", payload)
 
+    try:
+        # Parse JSON payload
+        payload: dict = json.loads(payload)
+
+        # Fetch exercises from backend
+        exercise_api_response = fetch_exercises_from_backend(
+            body_regions=payload.get("body_regions", [])
+        )
+
+        # Generate exercise plan
+        exercise_plan = recommend_exercises(
+            onboarding_data=payload,
+            exercise_api_response=exercise_api_response
+        )
+
+        return {
+            "data": {
+                "exercise_recommendations": exercise_plan
+            }
+        }
+
+    except Exception as e:
+        print("Error %s" % str(e))
+        return {
+            "error": str(e)
+        }

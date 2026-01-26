@@ -2,6 +2,8 @@ import cv2
 import mediapipe as mp
 import json
 import os
+from dotenv import load_dotenv
+load_dotenv()
 import time
 
 # ----------------------------------------
@@ -28,6 +30,13 @@ from posture_ai.compliance import calculate_compliance_percentage
 # Phase 4 – GPT-4.1 Ergonomic Correction Engine
 # ----------------------------------------
 from posture_ai.ai_correction_engine import generate_ergonomic_correction
+
+from posture_ai.exercise import recommend_exercises
+from posture_ai.exercise_adapter import build_exercise_onboarding
+from posture_ai.exercise_backend import fetch_exercises_from_backend
+BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
+
+
 
 # ----------------------------------------
 # Phase 5 – PDF Report Generator
@@ -145,6 +154,39 @@ def analyze_image(user_context: dict):
         print(f"⚠️ Warning: AI correction failed: {e}")
         ai_report = {"error": str(e), "recommendations": []}
 
+
+    # ----------------------------------------
+    # Phase 6 – Exercise Recommendation Engine
+    # ----------------------------------------
+
+    try:
+        exercise_onboarding = build_exercise_onboarding(
+            user_context=user_context,
+            final_iso=final_iso
+        )
+        print("Exercise onboarding:", exercise_onboarding)
+
+        exercise_api_response = fetch_exercises_from_backend(
+            body_regions=exercise_onboarding["body_regions"]
+        )
+        print("API response:", exercise_api_response)
+
+        exercise_plan = recommend_exercises(
+            onboarding_data=exercise_onboarding,
+            exercise_api_response=exercise_api_response
+        )
+        print("Final plan:", exercise_plan)
+
+        ai_report["exercise_recommendations"] = exercise_plan
+
+    except Exception as e:
+        print(f"⚠️ Exercise recommendation failed: {e}")
+        ai_report["exercise_recommendations"] = {
+            "error": str(e),
+            "recommended_session": []
+        }
+
+
     # ----------------------------------------
     # Phase 5 – PDF Report Generation
     # ----------------------------------------
@@ -157,7 +199,7 @@ def analyze_image(user_context: dict):
     else:
         print("\n❌ Failed to save annotated image.")
 
-    annotated_image_url = f"/output/annotated_{timestamp}.jpg"
+    annotated_image_url = f"{BASE_URL}/output/annotated_{timestamp}.jpg"
     ai_report["annotated_image_url"] = annotated_image_url
 
     # Now generate the PDF report with ISO results + AI corrections
@@ -173,6 +215,7 @@ def analyze_image(user_context: dict):
     #ai_report["annotated_image_url"] = annotated_image_url
 
     return final_iso, ai_report
+
 
 
 # ----------------------------------------
