@@ -111,6 +111,7 @@ async def analyze_exercises(
         exercise_api_response = fetch_exercises_from_backend(
             body_regions=payload.get("body_regions", [])
         )
+        print("")
 
         # Generate exercise plan
         exercise_plan = recommend_exercises(

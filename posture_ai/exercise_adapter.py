@@ -66,32 +66,88 @@ def build_exercise_onboarding(
 ) -> Dict:
     """
     Converts posture + workstation ISO analysis
-    into canonical exercise onboarding format
+    into exercise onboarding format compatible
+    with recommend_exercises()
     """
 
     pain_intensity: Dict[str, int] = {}
     body_regions = set()
 
-    # Extract problematic ISO regions
-    for iso_region, report in final_iso.get("regions", {}).items():
-        if report.get("status") in ["bad", "warning"]:
-            legacy_key = iso_region.lower()
+    # -------------------------------
+    # 1. POSTURE → BODY REGIONS
+    # -------------------------------
+    POSTURE_TO_REGION = {
+        "neck_flexion": "neck",
+        "shoulder_elevation": "upper_back",
+        "elbow_angle": "wrists_hands",
+        "wrist_deviation": "wrists_hands",
+        "pelvic_tilt": "lower_back",
+    }
 
-            canonical_region = LEGACY_TO_CANONICAL.get(legacy_key)
-            if canonical_region:
-                body_regions.add(canonical_region.value)
-                pain_intensity[canonical_region.value] = report.get(
-                    "severity", 5
-                )
+    posture = final_iso.get("posture", {})
+    for metric, report in posture.items():
+        severity = report.get("severity")
+
+        if severity not in ["yellow", "red"]:
+            continue
+
+        region = POSTURE_TO_REGION.get(metric)
+        if not region:
+            continue
+
+        body_regions.add(region)
+        pain_intensity[region] = max(
+            pain_intensity.get(region, 0),
+            6 if severity == "yellow" else 8
+        )
+
+    # -------------------------------
+    # 2. WORKSTATION → BODY REGIONS
+    # -------------------------------
+    WORKSTATION_TO_REGION = {
+        "monitor": "neck",
+        "worksurface": "wrists_hands",
+        "chair": "lower_back",
+    }
+
+    workstation = final_iso.get("workstation", {})
+    for component, rules in workstation.items():
+        for _, report in rules.items():
+            severity = report.get("severity")
+
+            if severity not in ["yellow", "red"]:
+                continue
+
+            region = WORKSTATION_TO_REGION.get(component)
+            if not region:
+                continue
+
+            body_regions.add(region)
+            pain_intensity[region] = max(
+                pain_intensity.get(region, 0),
+                6 if severity == "yellow" else 8
+            )
+
+    # -------------------------------
+    # 3. SYMPTOM FALLBACK (IMPORTANT)
+    # -------------------------------
+    if not body_regions:
+        symptom_fallback = {
+            "tingling": "wrists_hands",
+            "stiffness": "neck",
+        }
+        for symptom in user_context.get("optional_symptoms", []):
+            region = symptom_fallback.get(symptom)
+            if region:
+                body_regions.add(region)
+                pain_intensity[region] = 5
 
     return {
         "user_id": user_context.get("user_id"),
         "image_data": user_context.get("image_data"),
-        "body_regions": list(body_regions),          # canonical only
-        "pain_intensity": pain_intensity,            # keyed by canonical region
+        "body_regions": list(body_regions),
+        "pain_intensity": pain_intensity,
         "duration_pattern": user_context.get("duration_pattern"),
         "work_pattern": user_context.get("work_pattern"),
-        "optional_symptoms": user_context.get(
-            "optional_symptoms", []
-        ),
+        "optional_symptoms": user_context.get("optional_symptoms", []),
     }

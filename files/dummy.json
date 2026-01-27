@@ -16,9 +16,9 @@
     "duration_pattern": "less_than_1_week",
 
     "work_pattern": {
-      "hours_at_desk": 4,
-      "break_interval_hours": 3,
-      "device_usage": "laptop"
+      "hours_at_desk": "0-4",
+      "break_interval": "3H",
+      "device_usage": "LAPTOP"
     },
 
     "optional_symptoms": ["tingling", "stiffness"]
