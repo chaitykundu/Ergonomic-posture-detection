@@ -3,7 +3,7 @@ def merge_iso_reports(posture_report, workstation_report):
     final_output = {
         "posture": posture_report,
         "workstation": workstation_report,
-        "overall_severity": "green"
+        #"overall_severity": "green"
     }
 
     # Collect every severity into one list

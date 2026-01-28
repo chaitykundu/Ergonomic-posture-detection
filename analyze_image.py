@@ -131,7 +131,16 @@ def analyze_image(user_context: dict):
     final_iso = merge_iso_reports(posture_report, workstation_report)
 
     compliance_report = calculate_compliance_percentage(final_iso)
+    def severity_from_score(compliance_percent: float):
+        if compliance_percent >= 75:
+            return "green"
+        elif compliance_percent >= 40:
+            return "yellow"
+        else:
+            return "red"
+
     final_iso["compliance"] = compliance_report
+    final_iso["overall_severity"] = severity_from_score(compliance_report)
 
     print("\n================ Unified ISO Analysis ================")
     print(json.dumps(final_iso, indent=4))
