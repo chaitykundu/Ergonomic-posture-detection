@@ -78,8 +78,8 @@ def build_exercise_onboarding(
     # -------------------------------
     POSTURE_TO_REGION = {
         "neck_flexion": "neck",
-        "shoulder_elevation": "upper_back",
-        "elbow_angle": "wrists_hands",
+        "shoulder_elevation": "shoulders",
+        "elbow_angle": "elbows/forearms",
         "wrist_deviation": "wrists_hands",
         "pelvic_tilt": "lower_back",
     }

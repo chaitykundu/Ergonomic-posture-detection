@@ -5,7 +5,7 @@
       "image_path": "files/IMG2.jpg"
     },
 
-    "body_regions": ["neck", "upper_back", "wrists_hands"],
+    "body_regions": ["Neck", "Upper back", "Wrists/hands"],
 
     "pain_intensity": {
       "neck": 5,
@@ -13,7 +13,7 @@
       "wrists_hands": 8
     },
 
-    "duration_pattern": "less_than_1_week",
+    "duration_pattern": "Less than 1 week",
 
     "work_pattern": {
       "hours_at_desk": "0-4",
@@ -21,5 +21,5 @@
       "device_usage": "LAPTOP"
     },
 
-    "optional_symptoms": ["tingling", "stiffness"]
+    "optional_symptoms": ["Tingling", "Stiffness"]
   }

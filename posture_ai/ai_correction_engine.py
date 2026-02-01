@@ -58,7 +58,7 @@ Your responsibilities:
     "Lower Back": "medium"
     "Upper Back": "medium"
   },
-  "exercise_recommendations": [],
+  #"exercise_recommendations": [],
   "equipment_recommendations": [
     {
       "name": "Adjustable Monitor Riser",

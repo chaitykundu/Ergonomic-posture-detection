@@ -16,13 +16,39 @@ from typing import Dict, List
 # -------------------------------------------------------------------
 
 BODY_REGION_MAP = {
-    "neck": ["neck"],
-    "upper_back": ["upper_back"],
-    "shoulders":["shoulders"],
-    "lower_back":["lower_back"],
-    "Elbows/Forearms":["Elbows","Forearms"],
-    "wrists_hands": ["wrists"],
+    "neck": ["Neck"],
+    "upper_back": ["Upper Back"],
+    "shoulders": ["Shoulders"],
+    "lower_back": ["Lower Back"],
+    "elbows/forearms": ["Elbows/Forearms"],
+    "wrists_hands": ["Wrists/Hands"],
+    "knees": ["Knees"],
+    "ankles_feet": ["Ankles/Feet"],
+    "hips_glutes": ["Hips/Glutes"],
 }
+
+
+# -------------------------------------------------------------------
+# Region Normalizer (ADDED)
+# -------------------------------------------------------------------
+
+def normalize_region(raw_region: str) -> str | None:
+    """
+    Normalizes onboarding or backend region string
+    to backend canonical value (e.g. 'neck' → 'Neck').
+    """
+    if not raw_region:
+        return None
+
+    key = raw_region.strip().lower()
+
+    for onboarding_key, backend_regions in BODY_REGION_MAP.items():
+        if key == onboarding_key.lower():
+            return backend_regions[0]
+        if key == backend_regions[0].lower():
+            return backend_regions[0]
+
+    return None
 
 
 # -------------------------------------------------------------------
@@ -31,7 +57,14 @@ BODY_REGION_MAP = {
 # -------------------------------------------------------------------
 
 def normalize_onboarding(onboarding: Dict) -> Dict:
-    pain_map = onboarding.get("pain_intensity", {})
+    raw_pain_map = onboarding.get("pain_intensity", {})
+    pain_map = {}
+
+    # 🔹 Normalize pain map keys (ADDED)
+    for raw_region, pain in raw_pain_map.items():
+        normalized = normalize_region(raw_region)
+        if normalized:
+            pain_map[normalized.lower()] = pain
 
     priority_regions = sorted(
         pain_map.keys(),
@@ -56,7 +89,8 @@ def normalize_onboarding(onboarding: Dict) -> Dict:
         "pain_map": pain_map,
         "condition_type": condition_type,
         "symptoms": onboarding.get("optional_symptoms", []),
-        "max_exercises": 3 if condition_type == "acute" else 5,
+        #"max_exercises": 3 if condition_type == "acute" else 5,
+        "min_exercises": 3 if condition_type == "acute" else 5,
     }
 
 
@@ -68,8 +102,9 @@ def normalize_onboarding(onboarding: Dict) -> Dict:
 def resolve_body_regions(onboarding_regions: List[str]) -> List[str]:
     resolved = set()
     for region in onboarding_regions:
-        mapped = BODY_REGION_MAP.get(region, [])
-        resolved.update(mapped)
+        mapped = normalize_region(region)
+        if mapped:
+            resolved.add(mapped)
     return list(resolved)
 
 
@@ -78,14 +113,34 @@ def resolve_body_regions(onboarding_regions: List[str]) -> List[str]:
 # Hard safety & relevance filtering
 # -------------------------------------------------------------------
 
+def validate_exercise(ex: Dict) -> bool:
+    if not ex.get("id"):
+        return False
+    if not ex.get("body_region"):
+        return False
+    if not normalize_region(ex["body_region"]):
+        return False
+    return True
+
+
 def filter_exercises_by_region(
     exercises: List[Dict],
     allowed_regions: List[str]
 ) -> List[Dict]:
     return [
         ex for ex in exercises
-        if ex.get("body_region") in allowed_regions
+        if normalize_region(ex.get("body_region")) in allowed_regions
     ]
+
+
+def resolve_pain(region: str | None, pain_map: Dict[str, int]) -> int:
+    """
+    Returns pain level for a region.
+    Missing data is treated as no pain (0).
+    """
+    if not region:
+        return 0
+    return pain_map.get(region.lower(), 0)
 
 
 # -------------------------------------------------------------------
@@ -95,9 +150,11 @@ def filter_exercises_by_region(
 
 def pain_weighted_score(exercise: Dict, pain_map: Dict) -> int:
     base_score = exercise.get("score", 0)
-    region = exercise.get("body_region")
 
-    pain_level = pain_map.get(region, 5)
+    raw_region = exercise.get("body_region")
+    normalized_region = normalize_region(raw_region)
+
+    pain_level = resolve_pain(normalized_region, pain_map)
 
     if pain_level >= 8:
         return base_score + 3
@@ -116,6 +173,12 @@ def rank_exercises(
         reverse=True
     )
 
+def get_vas_tier(pain: int) -> str:
+    if pain >= 8:
+        return "HIGH"
+    elif pain >= 4:
+        return "MED"
+    return "LOW"
 
 # -------------------------------------------------------------------
 # Session Builder
@@ -124,24 +187,119 @@ def rank_exercises(
 
 def build_acute_session(
     exercises: List[Dict],
-    max_exercises: int
+    pain_map: Dict,
+    min_exercises: int,
+    max_exercises: int = 5
 ) -> List[Dict]:
+
     session = []
     used_regions = set()
 
+    # ---------------------------------
+    # 1. First pass: HIGH & MED regions
+    # ---------------------------------
     for ex in exercises:
-        region = ex.get("body_region")
+        region = normalize_region(ex.get("body_region"))
+        if not region or region in used_regions:
+            continue
 
-        if region in used_regions:
+        pain = pain_map.get(region.lower(), 0)
+        tier = get_vas_tier(pain)
+
+        # allow only safe intents per tier
+        intent = ex.get("intent")
+
+        if tier == "HIGH" and intent not in ["isometric", "relief"]:
+            continue
+        if tier == "MED" and intent not in ["mobility"]:
             continue
 
         session.append(ex)
         used_regions.add(region)
 
-        if len(session) >= max_exercises:
+        if len(session) >= min_exercises:
             break
 
-    return session
+    # ---------------------------------
+    # 2. Second pass: fill if needed
+    # ---------------------------------
+    if len(session) < min_exercises:
+        for ex in exercises:
+            region = normalize_region(ex.get("body_region"))
+            if region in used_regions:
+                continue
+
+            session.append(ex)
+            used_regions.add(region)
+
+            if len(session) >= min_exercises:
+                break
+
+    return session[:max_exercises]
+
+# -------------------------------------------------------------------
+# AI Guidance Generator (ADD HERE)
+# -------------------------------------------------------------------
+
+def generate_ai_exercise_guidance(
+    exercise: Dict,
+    condition_type: str,
+    pain_map: Dict
+) -> Dict:
+    """
+    Uses AI logic to generate personalized
+    description, duration, and safety notes
+    based on pain level and exercise score.
+    """
+
+    region = exercise["body_region"]
+    title = exercise["title"]
+    score = exercise.get("score", 5)
+
+    pain_level = pain_map.get(region.lower(), 5)
+
+    # -----------------------------
+    # Duration logic (pain + score)
+    # -----------------------------
+    if pain_level >= 8:
+        duration = "8–12 seconds"
+    elif score >= 8:
+        duration = "15–20 seconds"
+    else:
+        duration = "10–15 seconds"
+
+    # -----------------------------
+    # Safety logic
+    # -----------------------------
+    if pain_level >= 8:
+        safety_note = (
+            "Stop immediately if pain, tingling, or numbness increases. "
+            "Do not push through discomfort."
+        )
+    elif score < 6:
+        safety_note = (
+            "Perform gently and avoid forcing the movement. "
+            "Stop if discomfort appears."
+        )
+    else:
+        safety_note = (
+            "Move slowly and maintain controlled breathing throughout."
+        )
+
+    # -----------------------------
+    # Description logic
+    # -----------------------------
+    description = (
+        f"{title} is a controlled movement designed to improve mobility "
+        f"and reduce stiffness in the {region.lower()} area."
+    )
+    print("AI guidance called for:", exercise["title"])
+
+    return {
+        "description": description,
+        "recommended_duration": duration,
+        "safety_note": safety_note,
+    }
 
 
 # -------------------------------------------------------------------
@@ -159,16 +317,24 @@ def recommend_exercises(
 
     normalized = normalize_onboarding(onboarding_data)
 
-    exercises = exercise_api_response.get("exercises_list", [])
+    raw_exercises = exercise_api_response.get("exercises_list", [])
+
+    validated_exercises = [
+        ex for ex in raw_exercises
+        if validate_exercise(ex)
+    ]
+    print("validation exercise",validated_exercises )
 
     resolved_regions = resolve_body_regions(
         onboarding_data.get("body_regions", [])
     )
+    print("Resolved exercise",resolved_regions )
 
     filtered = filter_exercises_by_region(
-        exercises,
+        validated_exercises,
         resolved_regions
     )
+    print("filtered exercise",filtered )
 
     ranked = rank_exercises(
         filtered,
@@ -177,27 +343,28 @@ def recommend_exercises(
 
     session = build_acute_session(
         ranked,
-        normalized["max_exercises"]
+        normalized["pain_map"],
+        normalized["min_exercises"]
     )
 
     return {
-        #"user_id": normalized["user_id"],
         "condition_type": normalized["condition_type"],
         "focus_regions": resolved_regions,
         "recommended_session": [
             {
+            **{
                 "id": ex["id"],
                 "title": ex["title"],
                 "body_region": ex["body_region"],
-                "description": ex["description"],
                 "video": ex["video"],
                 "recommended_sets": 2,
-                "recommended_duration": "15–20 seconds",
-                "safety_note": (
-                    "Stop immediately if pain increases "
-                    "or tingling worsens"
-                ),
-            }
+            },
+            **generate_ai_exercise_guidance(
+                ex,
+                normalized["condition_type"],
+                normalized["pain_map"]
+            )
+        }
             for ex in session
         ]
     }
