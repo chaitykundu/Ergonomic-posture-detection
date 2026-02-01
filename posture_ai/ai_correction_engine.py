@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 
 import openai
 from openai import OpenAI, APIError, RateLimitError, AuthenticationError
+from posture_ai.equipment_source_resolver import apply_equipment_sources
+
 
 # --------------------------------------------------
 # 1. Load API key and init client
@@ -40,7 +42,8 @@ Your responsibilities:
 7. Always include repetitions, hold duration, and frequency exactly as provided in the input.
 8. Include a safety note for all exercises.
 9. If red-flag case detected, return only a short medical advice message.
-10. Produce STRICT JSON output only, in exactly this format:
+10. All corrections MUST include a short title and a clear description.
+11. Produce STRICT JSON output only, in exactly this format:
 
 {
   "posture_corrections": [],
@@ -49,10 +52,11 @@ Your responsibilities:
   #"iso_explanations": [],
   #"risk_summary": "",
   "body_region_risks": {
-    "elbows": "low",
-    "shoulder": "medium",
-    "wrist": "high",
-    "lower_back": "medium"
+    "Elbows": "low",
+    "Shoulder": "medium",
+    "Wrist": "high",
+    "Lower Back": "medium"
+    "Upper Back": "medium"
   },
   "exercise_recommendations": [],
   "equipment_recommendations": [
@@ -61,6 +65,7 @@ Your responsibilities:
       "description": "Height-adjustable stand (8-12 cm range) to position monitor at eye level",
       "priority": "high",
       "improvement_percentage": "+40%",
+      #"source": "Washington State DLI; ISO 9241-5"
       #"target_issue": "neck strain",
       #"price_range": "$25-$50",
       #"why_recommended": "Your monitor is currently too low, causing 35° neck flexion. A monitor riser will bring it to eye level, reducing neck strain by 40%."
@@ -203,6 +208,15 @@ def generate_ergonomic_correction(unified_iso_report: dict, user_context: dict) 
 
     try:
         parsed = json.loads(json_block)
+
+        # --------------------------------------------------
+        # ✅ Enforce deterministic equipment sources
+        # --------------------------------------------------
+        if "equipment_recommendations" in parsed:
+            parsed["equipment_recommendations"] = apply_equipment_sources(
+                parsed.get("equipment_recommendations", [])
+            )
+
         return parsed
     except Exception as e:
         print(f"⚠ JSON parse failed: {e}")

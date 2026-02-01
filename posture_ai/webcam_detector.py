@@ -80,7 +80,7 @@ def get_posture_report(landmarks, w: int, h: int):
     # ======================
     neck_vec = ear_mid - shoulder_mid
     neck_angle = np.clip(angle_from_vertical(neck_vec), 0, 90)
-    sev_neck, _ = classify_iso("neck_flexion", neck_angle)
+    sev_neck, dev_neck = classify_iso("neck_flexion", neck_angle)
 
     # ======================
     # 2. Shoulder elevation (shrugging)
@@ -97,14 +97,14 @@ def get_posture_report(landmarks, w: int, h: int):
         shoulder_elevation_deg = np.degrees(np.arctan(elev_ratio))
 
     shoulder_elevation_deg = np.clip(shoulder_elevation_deg, 0, 45)
-    sev_shoulder, _ = classify_iso("shoulder_elevation", shoulder_elevation_deg)
+    sev_shoulder, dev_shoulder = classify_iso("shoulder_elevation", shoulder_elevation_deg)
 
     # ======================
     # 3. Elbow angle
     # ======================
     elbow_angle = calculate_angle(shoulder_mid, elbow, wrist)
     elbow_angle = np.clip(elbow_angle, 0, 180)
-    sev_elbow, _ = classify_iso("elbow_angle", elbow_angle)
+    sev_elbow, dev_elbow = classify_iso("elbow_angle", elbow_angle)
 
     # ======================
     # 4. Wrist deviation
@@ -121,19 +121,180 @@ def get_posture_report(landmarks, w: int, h: int):
         wrist_dev = np.degrees(np.arccos(np.clip(cos, -1.0, 1.0)))
 
     wrist_dev = np.clip(wrist_dev, 0, 90)
-    sev_wrist, _ = classify_iso("wrist_deviation", wrist_dev)
+    sev_wrist, dev_wrist = classify_iso("wrist_deviation", wrist_dev)
 
     # ======================
     # 5. Trunk inclination (ISO pelvic proxy)
     # ======================
     trunk_vec = shoulder_mid - hip_mid
     trunk_angle = np.clip(angle_from_vertical(trunk_vec), 0, 90)
-    sev_pelvis, _ = classify_iso("pelvic_tilt", trunk_angle)
+    sev_pelvis, dev_pelvis = classify_iso("pelvic_tilt", trunk_angle)
 
+    # Build return dictionary with conditional deviation
+    def build_metric(angle, severity, deviation, iso):
+        result = {"angle": angle, "severity": severity, "iso": iso}
+        if severity != "green":
+            result["deviation"] = deviation
+        return result
+    
     return {
-        "neck_flexion": {"angle": neck_angle, "severity": sev_neck},
-        "shoulder_elevation": {"angle": shoulder_elevation_deg, "severity": sev_shoulder},
-        "elbow_angle": {"angle": elbow_angle, "severity": sev_elbow},
-        "wrist_deviation": {"angle": wrist_dev, "severity": sev_wrist},
-        "pelvic_tilt": {"angle": trunk_angle, "severity": sev_pelvis},
+        "neck_flexion": build_metric(neck_angle, sev_neck, dev_neck, "ISO 9241-5:2024"),
+        "shoulder_elevation": build_metric(shoulder_elevation_deg, sev_shoulder, dev_shoulder, "ISO 9241-5:2024"),
+        "elbow_angle": build_metric(elbow_angle, sev_elbow, dev_elbow, "ISO 9241-5:2024"),
+        "wrist_deviation": build_metric(wrist_dev, sev_wrist, dev_wrist, "ISO 9241-5:2024"),
+        "pelvic_tilt": build_metric(trunk_angle, sev_pelvis, dev_pelvis, "ISO 9241-5:2024"),
     }
+
+
+def draw_posture_status(frame, posture_data, x_offset=20, y_offset=60):
+    """
+    Draw posture status cards on frame with ISO compliance indicators.
+    """
+    # Severity colors (BGR format for OpenCV)
+    severity_colors = {
+        "green": (76, 175, 80),    # Green
+        "yellow": (255, 193, 7),   # Amber/Yellow
+        "red": (244, 67, 54)       # Red
+    }
+    
+    # Metric display names and ISO references
+    metric_info = {
+        "neck_flexion": {"name": "Neck Angle", "iso": "ISO 9241-5:2024"},
+        "shoulder_elevation": {"name": "Shoulder Height", "iso": "ISO 9241-5:2024"},
+        "elbow_angle": {"name": "Elbow Angle", "iso": "ISO 9241-5:2024 §5.2.1"},
+        "wrist_deviation": {"name": "Wrist Deviation", "iso": "ISO 9241-5:2024"},
+        "pelvic_tilt": {"name": "Trunk Angle", "iso": "ISO 9241-5:2024"}
+    }
+    
+    card_height = 85
+    card_width = 280
+    y_pos = y_offset
+    
+    for metric_key, data in posture_data.items():
+        if metric_key not in metric_info:
+            continue
+            
+        severity = data["severity"]
+        angle = data["angle"]
+        deviation = data.get("deviation", 0)
+        
+        metric_name = metric_info[metric_key]["name"]
+        iso_ref = metric_info[metric_key]["iso"]
+        
+        # Draw card background with slight transparency
+        overlay = frame.copy()
+        cv2.rectangle(overlay, 
+                     (x_offset, y_pos), 
+                     (x_offset + card_width, y_pos + card_height),
+                     (255, 255, 255), -1)
+        cv2.addWeighted(overlay, 0.9, frame, 0.1, 0, frame)
+        
+        # Draw border with severity color
+        color = severity_colors[severity]
+        cv2.rectangle(frame,
+                     (x_offset, y_pos),
+                     (x_offset + card_width, y_pos + card_height),
+                     color, 2)
+        
+        # Draw severity indicator circle
+        circle_x = x_offset + 25
+        circle_y = y_pos + 25
+        cv2.circle(frame, (circle_x, circle_y), 12, color, -1)
+        
+        # Add checkmark or warning symbol
+        if severity == "green":
+            # Checkmark
+            cv2.line(frame, (circle_x - 5, circle_y), (circle_x - 2, circle_y + 5), (255, 255, 255), 2)
+            cv2.line(frame, (circle_x - 2, circle_y + 5), (circle_x + 5, circle_y - 5), (255, 255, 255), 2)
+        else:
+            # Exclamation mark
+            cv2.line(frame, (circle_x, circle_y - 5), (circle_x, circle_y + 2), (255, 255, 255), 2)
+            cv2.circle(frame, (circle_x, circle_y + 6), 1, (255, 255, 255), -1)
+        
+        # Draw metric name
+        cv2.putText(frame, metric_name,
+                   (x_offset + 45, y_pos + 20),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.55, (33, 33, 33), 2)
+        
+        # Draw status text - ENHANCED for better visibility
+        if severity == "green":
+            status_text = "Optimal"
+            status_color = severity_colors["green"]
+        elif severity == "yellow":
+            status_text = f"{deviation:.0f}° deviation"
+            status_color = severity_colors["yellow"]
+        else:
+            status_text = f"{deviation:.0f}° deviation"
+            status_color = severity_colors["red"]
+        
+        # Add white background behind text for contrast
+        text_size = cv2.getTextSize(status_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)[0]
+        text_x = x_offset + card_width - text_size[0] - 15
+        text_y = y_pos + 20
+        
+        # Draw white rectangle behind text
+        cv2.rectangle(frame,
+                     (text_x - 5, text_y - text_size[1] - 3),
+                     (text_x + text_size[0] + 5, text_y + 5),
+                     (255, 255, 255), -1)
+        
+        # Draw the status text
+        cv2.putText(frame, status_text,
+                   (text_x, text_y),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, status_color, 2)
+        
+        # Draw ISO reference (fixed visibility)
+        cv2.putText(
+            frame,
+            iso_ref,
+            (x_offset + 45, y_pos + 45),
+            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (30, 30, 30), 1)
+        
+        # Draw angle value - ENHANCED for better visibility
+        angle_text = f"Current: {angle:.1f}°"
+        cv2.putText(frame, angle_text,
+                   (x_offset + 45, y_pos + 60),
+                   cv2.FONT_HERSHEY_SIMPLEX, 0.5, (50, 50, 50), 2)
+        
+        y_pos += card_height + 10
+    
+    return frame
+
+
+def draw_overall_status(frame, posture_data, x_offset=20, y_offset=20):
+    """
+    Draw overall posture compliance status banner.
+    """
+    # Count severities
+    severity_counts = {"green": 0, "yellow": 0, "red": 0}
+    for data in posture_data.values():
+        severity_counts[data["severity"]] += 1
+    
+    # Determine overall status
+    if severity_counts["red"] > 0:
+        overall_status = "Posture Needs Adjustment"
+        status_color = (244, 67, 54)  # Red
+    elif severity_counts["yellow"] > 0:
+        overall_status = "Posture Acceptable"
+        status_color = (255, 193, 7)  # Yellow
+    else:
+        overall_status = "Optimal Posture"
+        status_color = (76, 175, 80)  # Green
+    
+    # Draw status banner
+    banner_height = 40
+    banner_width = 280
+    
+    overlay = frame.copy()
+    cv2.rectangle(overlay,
+                 (x_offset, y_offset),
+                 (x_offset + banner_width, y_offset + banner_height),
+                 status_color, -1)
+    cv2.addWeighted(overlay, 0.85, frame, 0.15, 0, frame)
+    
+    # Draw status text
+    cv2.putText(frame, overall_status,
+               (x_offset + 10, y_offset + 27),
+               cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+    
+    return frame

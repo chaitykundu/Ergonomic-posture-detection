@@ -19,6 +19,7 @@ with open(ISO_WORKSTATION_CONFIG_PATH, "r") as f:
     WS_CFG = json.load(f)
 
 WS_RULES = WS_CFG["workstation_component_rules"]
+ISO_STANDARD_ID = WS_CFG.get("iso_standard_id")
 
 # ================================
 # 2. Init Models (YOLO + Pose meta)
@@ -113,6 +114,12 @@ def detect_workstation_objects_raw(frame):
     scale_x = original_w / 640
     scale_y = original_h / 480
 
+    WORKSTATION_CLASS_MAP = {
+            "monitor": {"monitor", "laptop", "screen"},
+            "worksurface": {"desk", "table", "dining table","counter", "bench", "cabinet"},
+            "chair": {"chair"}
+        }
+
     # 4️⃣ Extract YOLO boxes
     for box in results.boxes:
         cls_id = int(box.cls[0])
@@ -131,15 +138,19 @@ def detect_workstation_objects_raw(frame):
         #cv2.putText(frame, cls_name, (x1, y1 - 4),
                     #cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 220, 0), 1)
 
+        for ws_type, cls_set in WORKSTATION_CLASS_MAP.items():
+            if cls_name in cls_set:
+                components_raw[ws_type].append((x1, y1, x2, y2))
+
         # Map object classes
-        if cls_name in ["laptop", "monitor"]:
-            components_raw["monitor"].append((x1, y1, x2, y2))
+        # if cls_name in ["laptop", "monitor"]:
+        #     components_raw["monitor"].append((x1, y1, x2, y2))
 
-        if cls_name in ["table", "desk", "dining table"]:
-            components_raw["worksurface"].append((x1, y1, x2, y2))
+        # if cls_name in ["table", "desk", "dining table"]:
+        #     components_raw["worksurface"].append((x1, y1, x2, y2))
 
-        if cls_name == "chair":
-            components_raw["chair"].append((x1, y1, x2, y2))
+        # if cls_name == "chair":
+        #     components_raw["chair"].append((x1, y1, x2, y2))
 
     return components_raw
 
@@ -170,15 +181,26 @@ def filter_workstation_for_person(components_raw, anchors, frame_shape):
             obj_cx = (x1 + x2) / 2
             obj_cy = (y1 + y2) / 2
 
-            score = abs(obj_cx - cx_person) + abs(obj_cy - cy_person) * 0.4
+            # ✅ FIX: component-specific proximity logic
+            if comp_name == "monitor":
+                ref_y = anchors["Eye_Keypoint_Y"]
+                score = abs(obj_cx - cx_person) + abs(obj_cy - ref_y) * 0.3
+
+            elif comp_name == "worksurface":
+                ref_y = anchors["Thigh_Keypoint_Y"]
+                score = abs(obj_cx - cx_person) + abs(obj_cy - ref_y) * 0.4
+
+            else:  # chair
+                score = abs(obj_cx - cx_person) + abs(obj_cy - cy_person) * 0.4
 
             if score < best_score:
                 best_score = score
                 best_box = (x1, y1, x2, y2)
 
-        # Threshold: ignore objects too far from user
-        if best_box and best_score < w * 0.6:
+        # slightly relaxed threshold
+        if best_box and best_score < w * 0.75:
             components[comp_name] = best_box
+
 
     return components
 
@@ -232,7 +254,8 @@ def evaluate_rule_generic(rule, human_val, obj_val):
         "severity": "green",
         "status": "ideal",
         "delta": None,
-        "iso_principle": rule["iso_principle"]
+        "iso_standard_id": ISO_STANDARD_ID,
+        "iso_principle": rule.get("iso_principle")
     }
 
     if human_val is None or obj_val is None:
@@ -266,9 +289,7 @@ def evaluate_rule_generic(rule, human_val, obj_val):
     if "min_gap_cm" in rule and delta < rule["min_gap_cm"]:
         report["severity"] = "yellow"
 
-    # 🔥 THIS IS THE FIX
     report["status"] = severity_to_status(report["severity"])
-
     return report
 
 
