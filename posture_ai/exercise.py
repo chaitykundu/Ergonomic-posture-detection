@@ -8,6 +8,7 @@ Author: AI Recommendation Module
 """
 
 from typing import Dict, List
+from collections import defaultdict
 
 
 # -------------------------------------------------------------------
@@ -26,6 +27,7 @@ BODY_REGION_MAP = {
     "ankles_feet": ["Ankles/Feet"],
     "hips_glutes": ["Hips/Glutes"],
 }
+MIN_EXERCISES_PER_REGION = 3
 
 
 # -------------------------------------------------------------------
@@ -237,6 +239,53 @@ def build_acute_session(
 
     return session[:max_exercises]
 
+from collections import defaultdict
+
+def build_region_based_session(
+    exercises: List[Dict],
+    pain_map: Dict,
+    min_per_region: int = MIN_EXERCISES_PER_REGION,
+    max_per_region: int = 5
+) -> List[Dict]:
+
+    region_buckets = defaultdict(list)
+
+    # -----------------------------
+    # 1. Bucket exercises by region
+    # -----------------------------
+    for ex in exercises:
+        region = normalize_region(ex.get("body_region"))
+        if not region:
+            continue
+        region_buckets[region].append(ex)
+
+    final_session = []
+
+    # -----------------------------
+    # 2. Rank & select per region
+    # -----------------------------
+    for region, region_exercises in region_buckets.items():
+        ranked = rank_exercises(region_exercises, pain_map)
+
+        selected = ranked[:max(min_per_region, min(len(ranked), max_per_region))]
+        final_session.extend(selected)
+
+    return final_session
+# -------------------------------------------------------------------
+# Body Region Badge Text
+# -------------------------------------------------------------------
+def get_region_badge(pain_level: int) -> Dict:
+    if pain_level >= 4:
+        return {
+            "badge_color": "red",
+            "badge_text": "🔴 Therapy Priority"
+        }
+    return {
+        "badge_color": "green",
+        "badge_text": "🟢 Maintenance"
+    }
+
+
 # -------------------------------------------------------------------
 # AI Guidance Generator (ADD HERE)
 # -------------------------------------------------------------------
@@ -285,6 +334,10 @@ def generate_ai_exercise_guidance(
         safety_note = (
             "Move slowly and maintain controlled breathing throughout."
         )
+    # -----------------------------
+    # Badge logic (NEW)
+    # -----------------------------
+    badge = "🔴 Therapy Priority" if pain_level > 4 else "🟢 Maintenance"
 
     # -----------------------------
     # Description logic
@@ -299,6 +352,8 @@ def generate_ai_exercise_guidance(
         "description": description,
         "recommended_duration": duration,
         "safety_note": safety_note,
+        "region_vas": pain_level,
+        "badge": badge
     }
 
 
@@ -341,10 +396,10 @@ def recommend_exercises(
         normalized["pain_map"]
     )
 
-    session = build_acute_session(
+    session = build_region_based_session(
         ranked,
         normalized["pain_map"],
-        normalized["min_exercises"]
+        #normalized["min_exercises"]
     )
 
     return {

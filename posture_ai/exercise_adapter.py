@@ -96,9 +96,17 @@ def build_exercise_onboarding(
             continue
 
         body_regions.add(region)
+
+        if severity == "yellow":
+            pain = 4
+        elif severity == "red":
+            pain = 8
+        else:
+            pain = 0
+
         pain_intensity[region] = max(
             pain_intensity.get(region, 0),
-            6 if severity == "yellow" else 8
+            pain
         )
 
     # -------------------------------
