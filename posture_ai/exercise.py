@@ -238,39 +238,78 @@ def build_acute_session(
                 break
 
     return session[:max_exercises]
+# -------------------------------------------------------------------
+# Intent rules per VAS tier (ADD HERE)
+# -------------------------------------------------------------------
 
+VAS_INTENT_RULES = {
+    "LOW": {"strengthening"},
+    "MED": {"mobility", "stretching"},
+    "HIGH": {"isometric", "relief"},
+}
 from collections import defaultdict
 
 def build_region_based_session(
-    exercises: List[Dict],
-    pain_map: Dict,
-    min_per_region: int = MIN_EXERCISES_PER_REGION,
-    max_per_region: int = 5
-) -> List[Dict]:
+    exercises: list,
+    pain_map: dict,
+    min_total: int = 3,
+    max_total: int = 5,
+    max_per_region: int = 3
+) -> list:
 
     region_buckets = defaultdict(list)
 
-    # -----------------------------
-    # 1. Bucket exercises by region
-    # -----------------------------
+    # bucket by region
     for ex in exercises:
         region = normalize_region(ex.get("body_region"))
         if not region:
             continue
         region_buckets[region].append(ex)
 
-    final_session = []
+    session = []
+    active_regions = []
 
-    # -----------------------------
-    # 2. Rank & select per region
-    # -----------------------------
-    for region, region_exercises in region_buckets.items():
-        ranked = rank_exercises(region_exercises, pain_map)
+    # ---------------------------------
+    # 1. Main region exercises
+    # ---------------------------------
+    for region, region_exs in region_buckets.items():
+        pain = pain_map.get(region.lower(), 0)
+        tier = get_vas_tier(pain)
+        allowed_intents = VAS_INTENT_RULES[tier]
 
-        selected = ranked[:max(min_per_region, min(len(ranked), max_per_region))]
-        final_session.extend(selected)
+        # filter by intent
+        filtered = [
+        ex for ex in region_exs
+        if not ex.get("intent") or ex.get("intent") in allowed_intents
+    ]
 
-    return final_session
+
+        ranked = rank_exercises(filtered, pain_map)
+
+        selected = ranked[:max_per_region]
+        if selected:
+            active_regions.append(tier)
+            session.extend(selected)
+
+    # ---------------------------------
+    # 2. Cross-chain logic
+    # ---------------------------------
+    med_high_regions = sum(1 for t in active_regions if t in {"MED", "HIGH"})
+
+    if med_high_regions >= 2:
+        cross_chain = [
+            ex for ex in exercises
+            if ex.get("body_region") in {"Thoracic", "Upper Back"}
+            and ex.get("intent") == "mobility"
+        ]
+        cross_chain = rank_exercises(cross_chain, pain_map)
+        session.extend(cross_chain[:2])
+
+    # ---------------------------------
+    # 3. Clamp total count
+    # ---------------------------------
+    return session[:max_total]
+
 # -------------------------------------------------------------------
 # Body Region Badge Text
 # -------------------------------------------------------------------
@@ -340,6 +379,22 @@ def generate_ai_exercise_guidance(
     badge = "🔴 Therapy Priority" if pain_level > 4 else "🟢 Maintenance"
 
     # -----------------------------
+    # Improvement percentage logic
+    # -----------------------------
+    base_improvement = score * 5  # score 1–10 → 5–50%
+
+    if pain_level >= 8:
+        base_improvement += 30
+    elif pain_level >= 4:
+        base_improvement += 15
+    else:
+        base_improvement += 5
+
+    # HARD CAP
+    improvement_percentage = min(base_improvement, 100)
+
+
+    # -----------------------------
     # Description logic
     # -----------------------------
     description = (
@@ -349,11 +404,12 @@ def generate_ai_exercise_guidance(
     print("AI guidance called for:", exercise["title"])
 
     return {
-        "description": description,
+        #"description": description,
         "recommended_duration": duration,
         "safety_note": safety_note,
         "region_vas": pain_level,
-        "badge": badge
+        "badge": badge,
+        "improvement_percentage": improvement_percentage
     }
 
 
@@ -411,6 +467,7 @@ def recommend_exercises(
                 "id": ex["id"],
                 "title": ex["title"],
                 "body_region": ex["body_region"],
+                "description": ex["description"],
                 "video": ex["video"],
                 "recommended_sets": 2,
             },

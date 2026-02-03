@@ -52,13 +52,12 @@ Your responsibilities:
   #"iso_explanations": [],
   #"risk_summary": "",
   "body_region_risks": {
-    "Elbows": "low",
-    "Shoulder": "medium",
-    "Wrist": "high",
-    "Lower Back": "medium"
-    "Upper Back": "medium"
+    "elbows": "low",
+    "shoulder": "medium",
+    "wrist": "high",
+    "lower_back": "medium"
   },
-  #"exercise_recommendations": [],
+  "exercise_recommendations": [],
   "equipment_recommendations": [
     {
       "name": "Adjustable Monitor Riser",
