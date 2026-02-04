@@ -107,6 +107,44 @@ def generate_pdf_report(final_iso_report, ai_report, image_path="output/annotate
     # === RISK SUMMARY ===
     risk_summary = ai_report.get("risk_summary", "No risk summary available.")
     y_pos = add_section(c, "Risk Summary", risk_summary, y_pos)
+    
+    # === PAIN SUMMARY ===
+    pain_summary_lines = []
+
+    avg_pain = ai_report.get("exercise_recommendations", {}).get("average_pain_vas")
+    if avg_pain:
+        pain_summary_lines.append(f"Average Pain Level: VAS {avg_pain}/10")
+
+    main_region = (
+        ai_report.get("exercise_recommendations", {}).get("main_pain_region")
+        or ai_report.get("exercise_recommendations", {}).get("main_pain_regions")
+    )
+
+    if main_region:
+        if "region" in main_region:
+            region_text = main_region["region"]
+        elif "regions" in main_region:
+            region_text = ", ".join(main_region["regions"])
+        else:
+            region_text = "Unknown"
+
+        pain_summary_lines.append(
+            f"Main Pain Region(s): {region_text} (VAS {main_region.get('vas', 'N/A')})"
+        )
+
+
+    future_risk = ai_report.get("exercise_recommendations", {}).get("future_risk")
+    if future_risk:
+        pain_summary_lines.append(f"Future Risk: {future_risk['label']}")
+
+    if pain_summary_lines:
+        y_pos = add_section(
+            c,
+            "Pain & Risk Summary",
+            "\n".join(pain_summary_lines),
+            y_pos
+        )
+
 
     # === EXERCISE RECOMMENDATIONS ===
     exercises = ai_report.get("exercise_recommendations", [])

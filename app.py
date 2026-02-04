@@ -90,9 +90,23 @@ async def upload_image(
         payload: dict = json.loads(payload)
         payload.update({"image_data": {"image_path": relative_path}})
         output = analyze_image(payload)
+
+        if output is None:
+            return {
+                "success": False,
+                "error_code": "ANALYSIS_FAILED",
+                "message": "Posture analysis failed unexpectedly.",
+                "data": None
+            }
+
+        if isinstance(output, dict) and output.get("success") is False:
+            return output
+
         return {
+            "success": True,
             "data": output
         }
+
     except Exception as e:
         print("Error %s" % str(e))
 

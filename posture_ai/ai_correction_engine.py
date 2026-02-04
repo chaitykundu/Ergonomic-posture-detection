@@ -70,7 +70,7 @@ Your responsibilities:
       #"why_recommended": "Your monitor is currently too low, causing 35° neck flexion. A monitor riser will bring it to eye level, reducing neck strain by 40%."
     }
   ]
-  #"final_advice": ""
+  "final_advice": ""
 }
 IMPORTANT RULES FOR EQUIPMENT RECOMMENDATIONS:
 - Priority levels: "high" (critical), "medium" (recommended), "low" (optional)

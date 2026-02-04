@@ -9,7 +9,7 @@ Author: AI Recommendation Module
 
 from typing import Dict, List
 from collections import defaultdict
-
+from posture_ai.future_risk import calculate_future_risk
 
 # -------------------------------------------------------------------
 # Body Region Mapping
@@ -404,7 +404,7 @@ def generate_ai_exercise_guidance(
     print("AI guidance called for:", exercise["title"])
 
     return {
-        #"description": description,
+        "description": description,
         "recommended_duration": duration,
         "safety_note": safety_note,
         "region_vas": pain_level,
@@ -412,6 +412,26 @@ def generate_ai_exercise_guidance(
         "improvement_percentage": improvement_percentage
     }
 
+def calculate_average_pain(pain_map: Dict[str, int]) -> int:
+    if not pain_map:
+        return 0
+    return round(sum(pain_map.values()) / len(pain_map))
+
+def get_main_pain_region(pain_map: Dict[str, int]) -> Dict | None:
+    if not pain_map:
+        return None
+
+    max_pain = max(pain_map.values())
+    regions = [
+        region.title()
+        for region, pain in pain_map.items()
+        if pain == max_pain
+    ]
+
+    return {
+        "regions": regions,
+        "vas": max_pain
+    }
 
 # -------------------------------------------------------------------
 # Public API
@@ -427,6 +447,13 @@ def recommend_exercises(
     """
 
     normalized = normalize_onboarding(onboarding_data)
+    main_pain_region = get_main_pain_region(normalized["pain_map"])
+    average_pain = calculate_average_pain(normalized["pain_map"])
+    future_risk = calculate_future_risk(
+        average_pain=average_pain,
+        affected_regions=len(normalized["pain_map"]),
+        overall_severity=exercise_api_response.get("overall_severity", "green")
+    )
 
     raw_exercises = exercise_api_response.get("exercises_list", [])
 
@@ -459,15 +486,18 @@ def recommend_exercises(
     )
 
     return {
-        "condition_type": normalized["condition_type"],
-        "focus_regions": resolved_regions,
-        "recommended_session": [
-            {
+    "condition_type": normalized["condition_type"],
+    "focus_regions": resolved_regions,
+    "main_pain_region": main_pain_region,
+    "average_pain_vas": average_pain,
+    "future_risk": future_risk,    
+    "recommended_session": [
+        {
             **{
                 "id": ex["id"],
                 "title": ex["title"],
+                #"description":ex["description"]
                 "body_region": ex["body_region"],
-                "description": ex["description"],
                 "video": ex["video"],
                 "recommended_sets": 2,
             },
@@ -477,6 +507,7 @@ def recommend_exercises(
                 normalized["pain_map"]
             )
         }
-            for ex in session
-        ]
-    }
+        for ex in session
+    ]
+}
+

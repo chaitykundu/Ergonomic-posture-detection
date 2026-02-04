@@ -41,7 +41,7 @@ BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 # ----------------------------------------
 # Phase 5 – PDF Report Generator
 # ----------------------------------------
-#from posture_ai.pdf_report_generator import generate_pdf_report
+from posture_ai.pdf_report_generator import generate_pdf_report
 
 # ----------------------------------------
 # Main Image Analysis Function (Phase 1–4)
@@ -81,8 +81,13 @@ def analyze_image(user_context: dict):
         results = pose.process(frame_rgb)
 
         if not results.pose_landmarks:
-            print("❌ No human detected in this image.")
-            return None
+            return {
+                "success": False,
+                "error_code": "NO_HUMAN_DETECTED",
+                "message": "No human posture detected in the image. Please upload a clear image with a visible person.",
+                "data": None
+            }
+
 
         # Pose landmarks
         lm = results.pose_landmarks.landmark
@@ -212,16 +217,19 @@ def analyze_image(user_context: dict):
     ai_report["annotated_image_url"] = annotated_image_url
 
     # Now generate the PDF report with ISO results + AI corrections
-    #generate_pdf_report(final_iso, ai_report, image_path=output_file)
+    generate_pdf_report(final_iso, ai_report, image_path=output_file)
 
-    #try:
-        #generate_pdf_report(final_iso, ai_report, image_path=output_file)
-        #print("✅ PDF report generated successfully")
-    #except Exception as e:
-        #print(f"⚠️ Warning: PDF generation failed: {e}")
+    try:
+        pdf_path = generate_pdf_report(
+            final_iso_report=final_iso,
+            ai_report=ai_report,
+            image_path=output_file
+        )
+        ai_report["pdf_report_path"] = pdf_path
+        print("✅ PDF report generated:", pdf_path)
+    except Exception as e:
+        print(f"⚠️ PDF generation failed: {e}")
 
-    #annotated_image_url = f"/output/annotated_{timestamp}.jpg"
-    #ai_report["annotated_image_url"] = annotated_image_url
 
     return final_iso, ai_report
 
