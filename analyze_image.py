@@ -24,6 +24,7 @@ from posture_ai.postura_workstation import (
 from posture_ai.unified_iso_engine import merge_iso_reports
 from posture_ai.arrow_annotation import apply_correction_arrows
 from posture_ai.compliance import calculate_compliance_percentage
+from posture_ai.pdf_equipment_report import generate_equipment_pdf
 
 
 # ----------------------------------------
@@ -218,6 +219,21 @@ def analyze_image(user_context: dict):
 
     # Now generate the PDF report with ISO results + AI corrections
     generate_pdf_report(final_iso, ai_report, image_path=output_file)
+
+    # ----------------------------------------
+    # Equipment PDF Report (NEW)
+    # ----------------------------------------
+    from posture_ai.pdf_equipment_report import generate_equipment_pdf
+
+    equipment_pdf_path = generate_equipment_pdf(
+        ai_report.get("equipment_recommendations", [])
+        #ai_report.get("exercise_recommendations", None)
+    )
+
+    equipment_pdf_filename = os.path.basename(equipment_pdf_path)
+    equipment_pdf_url = f"{BASE_URL}/output/{equipment_pdf_filename}"
+
+    ai_report["equipment_pdf_url"] = equipment_pdf_url
 
     try:
         pdf_path = generate_pdf_report(
