@@ -109,7 +109,7 @@ def calculate_compliance_percentage(final_iso: dict):
     return round(max(0, min(overall, 100)), 1)
 
 def iso_status(compliance_percent: float):
-    if compliance_percent >= 75:
+    if compliance_percent >= 70:
         return "green", "Compliant"
     elif compliance_percent >= 40:
         return "yellow", "Corrective action required"

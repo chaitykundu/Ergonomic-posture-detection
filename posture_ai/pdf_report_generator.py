@@ -89,31 +89,33 @@ def generate_pdf_report(final_iso_report, ai_report, image_path="output/annotate
         sev = data.get("severity", "unknown").capitalize()
         ang = data.get("angle", "N/A")
         joint_name = joint.replace("_", " ").title()
-        posture_lines.append(f"• {joint_name}: {sev} risk (Angle: {ang}°)")
+        posture_lines.append(f"• {joint_name}: {sev}")
     y_pos = add_section(c, "Posture Analysis", "\n".join(posture_lines), y_pos)
 
     # === WORKSTATION ANALYSIS ===
     ws_lines = []
     for component, rules in final_iso_report.get("workstation", {}).items():
         comp_name = component.replace("_", " ").title()
-        ws_lines.append(f"{comp_name}:")
+
         for rule_id, rule in rules.items():
             sev = rule.get("severity", "unknown").capitalize()
-            delta = rule.get("delta", "N/A")
-            unit = rule.get("unit", "")
-            ws_lines.append(f"   – {rule_id}: {sev} (Δ {delta}{unit})")
+            rule_name = rule_id.replace("_", " ")
+
+            ws_lines.append(
+                f"• {comp_name}: {rule_name}: {sev}"
+            )
     y_pos = add_section(c, "Workstation Analysis", "\n".join(ws_lines), y_pos)
 
     # === RISK SUMMARY ===
-    risk_summary = ai_report.get("risk_summary", "No risk summary available.")
-    y_pos = add_section(c, "Risk Summary", risk_summary, y_pos)
+    # risk_summary = ai_report.get("risk_summary", "No risk summary available.")
+    # y_pos = add_section(c, "Risk Summary", risk_summary, y_pos)
     
     # === PAIN SUMMARY ===
     pain_summary_lines = []
 
     avg_pain = ai_report.get("exercise_recommendations", {}).get("average_pain_vas")
     if avg_pain:
-        pain_summary_lines.append(f"Average Pain Level: VAS {avg_pain}/10")
+        pain_summary_lines.append(f"Average Pain Level: {avg_pain}")
 
     main_region = (
         ai_report.get("exercise_recommendations", {}).get("main_pain_region")
@@ -145,12 +147,38 @@ def generate_pdf_report(final_iso_report, ai_report, image_path="output/annotate
             y_pos
         )
 
+    # === AI POSTURE & ERGONOMIC CORRECTIONS ===
+    corrections = ai_report.get("corrections", [])
+
+    if corrections:
+        correction_lines = []
+
+        for item in corrections:
+            title = item.get("title")
+            desc = item.get("description")
+
+            if title and desc:
+                correction_lines.append(
+                    f"• {title}: {desc}"
+                )
+            elif title:
+                correction_lines.append(f"• {title}")
+            elif desc:
+                correction_lines.append(f"• {desc}")
+
+        y_pos = add_section(
+            c,
+            "Posture & Ergonomic Corrections",
+            "\n".join(correction_lines),
+            y_pos
+        )
+
 
     # === EXERCISE RECOMMENDATIONS ===
-    exercises = ai_report.get("exercise_recommendations", [])
-    if not exercises:
-        exercises = ["No specific exercises recommended at this time."]
-    y_pos = add_section(c, "Exercise Recommendations", "\n\n".join(exercises), y_pos)
+    # exercises = ai_report.get("exercise_recommendations", [])
+    # if not exercises:
+    #     exercises = ["No specific exercises recommended at this time."]
+    # y_pos = add_section(c, "Exercise Recommendations", "\n\n".join(exercises), y_pos)
 
     # === FINAL ADVICE ===
     final_advice = ai_report.get("final_advice", "No final advice available.")

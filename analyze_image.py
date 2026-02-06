@@ -99,11 +99,11 @@ def analyze_image(user_context: dict):
         anchors = compute_posture_anchors(lm, frame.shape)
 
         # Draw skeleton
-        #mp.solutions.drawing_utils.draw_landmarks(
-            #frame,
-           # results.pose_landmarks,
-           # mp_pose.POSE_CONNECTIONS
-        #)
+        # mp.solutions.drawing_utils.draw_landmarks(
+        #     frame,
+        #    results.pose_landmarks,
+        #    mp_pose.POSE_CONNECTIONS
+        # )
 
     # ----------------------------------------
     # Phase 2 – Workstation Detection (YOLO)
@@ -137,7 +137,7 @@ def analyze_image(user_context: dict):
 
     compliance_report = calculate_compliance_percentage(final_iso)
     def severity_from_score(compliance_percent: float):
-        if compliance_percent >= 75:
+        if compliance_percent >= 70:
             return "green"
         elif compliance_percent >= 40:
             return "yellow"
@@ -225,7 +225,12 @@ def analyze_image(user_context: dict):
             ai_report=ai_report,
             image_path=output_file
         )
-        ai_report["pdf_report_path"] = pdf_path
+        pdf_filename = os.path.basename(pdf_path)
+        pdf_url = f"{BASE_URL}/output/{pdf_filename}"
+
+        ai_report["pdf_report_url"] = pdf_url
+
+        #ai_report["pdf_report_path"] = pdf_path
         print("✅ PDF report generated:", pdf_path)
     except Exception as e:
         print(f"⚠️ PDF generation failed: {e}")
