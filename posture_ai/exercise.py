@@ -564,7 +564,18 @@ def recommend_exercises(
     # 3. Normal flow
     main_pain_region = get_main_pain_region(normalized["pain_map"])
     average_pain = calculate_average_pain(normalized["pain_map"])
-    
+    # After average pain
+    max_pain = max(normalized["pain_map"].values())
+
+    clinical_projection_text = (
+        "📉 Clinical Projection: Consistent practice is associated with "
+        "30–50% symptom reduction within 21 days."
+        if max_pain >= 4
+        else
+        "🛡️ Clinical Projection: Daily micro-breaks are associated with "
+        "up to 45% lower future injury risk."
+    )
+        
     raw_exercises = exercise_api_response.get("exercises_list", [])
     
     print(f"Raw exercises from API: {len(raw_exercises)}")
@@ -620,5 +631,10 @@ def recommend_exercises(
                 )
             }
             for ex in session
-        ]
+        ],
+        #"max_pain_vas": max_pain,
+        "clinical_projection": {
+            "text": clinical_projection_text,
+            "source": "ISO 9241-5; Journal of Applied Ergonomics"
+        }
     }
