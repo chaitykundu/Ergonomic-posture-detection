@@ -481,7 +481,7 @@ def generate_ai_exercise_guidance(
     )
     
     return {
-        "description": description,
+        #"description": description,
         "recommended_duration": duration,
         "safety_note": safety_note,
         "region_vas": pain_level,
@@ -606,8 +606,12 @@ def recommend_exercises(
             {
                 "id": ex["id"],
                 "title": ex["title"],
+                "Purpose": ex.get("purpose", ""),
                 "body_region": ex["body_region"],
+                "Muscles addressed": ex.get("muscles_addressed", ""),
                 "video": ex.get("video", ""),
+                "description": ex.get("description", ""),
+                "Contraindications":ex.get("contraindications", ""),
                 "recommended_sets": 2,
                 **generate_ai_exercise_guidance(
                     ex,
