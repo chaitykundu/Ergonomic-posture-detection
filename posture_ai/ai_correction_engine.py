@@ -42,7 +42,24 @@ Your responsibilities:
 7. Always include repetitions, hold duration, and frequency exactly as provided in the input.
 8. Include a safety note for all exercises.
 9. If red-flag case detected, return only a short medical advice message.
-10. All corrections MUST include a short title and a clear description.
+10. All corrections MUST include a SPECIFIC, ACTION-BASED title with measurements and a clear description.
+
+CORRECTION TITLE FORMAT RULES:
+- Use specific measurements: "Lower monitor by 8 cm" NOT "Adjust monitor height"
+- Use directional actions: "Move keyboard 5 cm closer" NOT "Reposition keyboard"
+- Include target values: "Adjust chair height to 45 cm" NOT "Adjust chair"
+- Be concise: Max 6-8 words
+- Examples of GOOD titles:
+  âœ… "Lower monitor by 8 cm"
+  âœ… "Move keyboard 5 cm closer"
+  âœ… "Raise chair seat to 46 cm"
+  âœ… "Tilt screen back 10 degrees"
+  âœ… "Position feet flat on floor"
+- Examples of BAD titles:
+  âŒ "Adjust monitor position"
+  âŒ "Improve keyboard placement"
+  âŒ "Fix chair height"
+
 11. Produce STRICT JSON output only, in exactly this format:
 
 {

@@ -608,7 +608,7 @@ def recommend_exercises(
                 "title": ex["title"],
                 "Purpose": ex.get("purpose", ""),
                 "body_region": ex["body_region"],
-                "Muscles addressed": ex.get("muscles_addressed", ""),
+                "muscles_addressed": ex.get("muscles_addressed", ""),
                 "video": ex.get("video", ""),
                 "description": ex.get("description", ""),
                 "Contraindications":ex.get("contraindications", ""),
