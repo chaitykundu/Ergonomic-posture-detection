@@ -75,7 +75,7 @@ CORRECTION TITLE FORMAT RULES:
     "wrist": "high",
     "lower_back": "medium"
   },
-  "exercise_recommendations": [],
+  #"exercise_recommendations": [],
   "equipment_recommendations": [
     {
       "name": "Adjustable Monitor Riser",

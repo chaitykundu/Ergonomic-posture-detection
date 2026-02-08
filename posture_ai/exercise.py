@@ -30,6 +30,7 @@ from collections import defaultdict
 
 BACKEND_BODY_REGIONS = [
     "Neck",
+    "Upper Back",
     "Shoulders",
     "Elbows/Forearms",
     "Wrists/Hands",
@@ -153,6 +154,9 @@ def normalize_onboarding(onboarding: Dict) -> Dict:
     }
     
     condition_type = DURATION_TO_CONDITION.get(duration_code, "chronic")
+    print("\n🧪 DEBUG — CONDITION TYPE MAPPING")
+    print("Raw duration_pattern from UI:", onboarding.get("duration_pattern"))
+    print("Mapped condition_type:", condition_type)
     
     return {
         "user_id": onboarding.get("user_id"),
@@ -541,6 +545,11 @@ def recommend_exercises(
     
     # 1. Normalize onboarding
     normalized = normalize_onboarding(onboarding_data)
+    #debug
+    print("\n🧪 DEBUG 1 — AFTER NORMALIZATION")
+    print("Normalized pain_map:", normalized["pain_map"])
+    print("Pain values:", list(normalized["pain_map"].values()))
+    print("Region count:", len(normalized["pain_map"]))
     
     resolved_regions = resolve_body_regions(
         onboarding_data.get("body_regions", [])
@@ -551,19 +560,30 @@ def recommend_exercises(
     
     # 2. RED-FLAG CHECK
     if is_red_flag_case(normalized["pain_map"]):
+        print("\n🧪 DEBUG 3 — RED FLAG CHECK")
+        print("Is red flag?:", is_red_flag_case(normalized["pain_map"]))
+        print("Max pain:", max(normalized["pain_map"].values()))
         print("🔴 RED FLAG CASE DETECTED")
         return {
             "condition_type": normalized["condition_type"],
             "focus_regions": resolved_regions,
             "red_flag": True,
-            "average_pain_vas": max(normalized["pain_map"].values()),
-            "recommended_session": [],
-            "llm_message": RED_FLAG_LLM_MESSAGE
+            "average_pain_vas": calculate_average_pain(normalized["pain_map"]),
+            "max_pain_vas": max(normalized["pain_map"].values()),
+            "llm_message": RED_FLAG_LLM_MESSAGE,
+            "recommended_session": []
         }
     
     # 3. Normal flow
     main_pain_region = get_main_pain_region(normalized["pain_map"])
     average_pain = calculate_average_pain(normalized["pain_map"])
+
+    print("\n🧪 DEBUG 2 — BEFORE AVERAGE CALCULATION")
+    print("Pain map used for average:", normalized["pain_map"])
+    print(
+        "Manual average:",
+        sum(normalized["pain_map"].values()) / len(normalized["pain_map"])
+    )
     # After average pain
     max_pain = max(normalized["pain_map"].values())
 
