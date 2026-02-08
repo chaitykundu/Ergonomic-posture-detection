@@ -24,7 +24,7 @@ from posture_ai.postura_workstation import (
 from posture_ai.unified_iso_engine import merge_iso_reports
 from posture_ai.arrow_annotation import apply_correction_arrows
 from posture_ai.compliance import calculate_compliance_percentage
-from posture_ai.pdf_equipment_report import generate_equipment_pdf
+#from posture_ai.pdf_equipment_report import generate_equipment_pdf
 
 
 # ----------------------------------------
@@ -217,23 +217,23 @@ def analyze_image(user_context: dict):
     annotated_image_url = f"{BASE_URL}/output/annotated_{timestamp}.jpg"
     ai_report["annotated_image_url"] = annotated_image_url
 
-    # Now generate the PDF report with ISO results + AI corrections
-    generate_pdf_report(final_iso, ai_report, image_path=output_file)
+    # # Now generate the PDF report with ISO results + AI corrections
+    # generate_pdf_report(final_iso, ai_report, image_path=output_file)
 
-    # ----------------------------------------
-    # Equipment PDF Report (NEW)
-    # ----------------------------------------
-    from posture_ai.pdf_equipment_report import generate_equipment_pdf
+    # # ----------------------------------------
+    # # Equipment PDF Report (NEW)
+    # # ----------------------------------------
+    # from posture_ai.pdf_equipment_report import generate_equipment_pdf
 
-    equipment_pdf_path = generate_equipment_pdf(
-        ai_report.get("equipment_recommendations", [])
-        #ai_report.get("exercise_recommendations", None)
-    )
+    # equipment_pdf_path = generate_equipment_pdf(
+    #     ai_report.get("equipment_recommendations", [])
+    #     #ai_report.get("exercise_recommendations", None)
+    # )
 
-    equipment_pdf_filename = os.path.basename(equipment_pdf_path)
-    equipment_pdf_url = f"{BASE_URL}/output/{equipment_pdf_filename}"
+    #equipment_pdf_filename = os.path.basename(equipment_pdf_path)
+    #equipment_pdf_url = f"{BASE_URL}/output/{equipment_pdf_filename}"
 
-    ai_report["equipment_pdf_url"] = equipment_pdf_url
+   # ai_report["equipment_pdf_url"] = equipment_pdf_url
 
     try:
         pdf_path = generate_pdf_report(
@@ -245,6 +245,16 @@ def analyze_image(user_context: dict):
         pdf_url = f"{BASE_URL}/output/{pdf_filename}"
 
         ai_report["pdf_report_url"] = pdf_url
+
+        from posture_ai.pdf_equipment_report import generate_equipment_excel
+
+        equipment_xlsx_path = generate_equipment_excel(
+            ai_report.get("equipment_recommendations", [])
+        )
+
+        filename = os.path.basename(equipment_xlsx_path)
+        ai_report["equipment_excel_url"] = f"{BASE_URL}/output/{filename}"
+
 
         #ai_report["pdf_report_path"] = pdf_path
         print("✅ PDF report generated:", pdf_path)
