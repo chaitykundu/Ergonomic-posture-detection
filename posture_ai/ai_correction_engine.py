@@ -69,6 +69,7 @@ CORRECTION TITLE FORMAT RULES:
   #"iso_explanations": [],
   #"risk_summary": "",
   "body_region_risks": {
+    "neck": "medium",
     "elbows": "low",
     "shoulder": "medium",
     "wrist": "high",
