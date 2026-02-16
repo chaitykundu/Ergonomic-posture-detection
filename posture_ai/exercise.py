@@ -618,11 +618,16 @@ def recommend_exercises(
     
     # Rank by pain-weighted score
     ranked = rank_exercises(filtered, normalized["pain_map"])
+    print("\n🧪 DEBUG — BEFORE BUILD SESSION")
+    print("Condition Type:", normalized["condition_type"])
+    print("Min Exercises Allowed:", normalized["min_exercises"])
+    print("Ranked exercises count:", len(ranked))
     
     # Build session
     session = build_region_based_session(
         ranked,
-        normalized["pain_map"]
+        normalized["pain_map"],
+        max_total=normalized["min_exercises"]
     )
     
     print(f"\n✓ Final session: {len(session)} exercises")
@@ -639,6 +644,7 @@ def recommend_exercises(
                 "title": ex["title"],
                 "Purpose": ex.get("purpose", ""),
                 "body_region": ex["body_region"],
+                "muscle_ids": ex.get("muscle_ids", []),
                 "muscles_addressed": ex.get("muscles_addressed", ""),
                 "video": ex.get("video", ""),
                 "description": ex.get("description", ""),

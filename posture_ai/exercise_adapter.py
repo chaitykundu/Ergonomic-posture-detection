@@ -46,6 +46,9 @@ POSTURE_WORKSTATION_TO_BACKEND = {
     "shoulders": "Shoulders",
     "shoulder_elevation": "Shoulders",
     "upper_back": "Shoulders",
+    "mid_back": "Shoulders",          # ✅ FIX
+    "thoracic": "Shoulders",          # optional alias
+    "upper_spine": "Shoulders",
     
     # Arm/Elbow/Wrist issues
     "elbows/forearms": "Elbows/Forearms",
@@ -65,6 +68,7 @@ POSTURE_WORKSTATION_TO_BACKEND = {
     "pelvis": "Hips/Glutes",
     "glutes": "Hips/Glutes",
     "hips_glutes": "Hips/Glutes",
+    "mid_back": "Hips/Glutes", 
     
     # Leg/Knee issues
     "knee": "Knees",
