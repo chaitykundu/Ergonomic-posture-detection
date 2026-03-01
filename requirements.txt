@@ -16,3 +16,5 @@ pillow
 fastapi 
 uvicorn
 openpyxl
+python-dotenv
+openai
