@@ -117,7 +117,6 @@ MODEL_PRIORITY = [
     "gpt-4o-mini" # cheapest fallback
 ]
 
-
 # --------------------------------------------------
 # 4. Small helper: try to pull JSON out of messy text
 # --------------------------------------------------
