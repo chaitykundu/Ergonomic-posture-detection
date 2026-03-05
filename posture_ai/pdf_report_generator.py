@@ -77,11 +77,11 @@ def generate_pdf_report(final_iso_report, ai_report, image_path="output/annotate
     # === HEADER ===
     c.setFont("Helvetica-Bold", 20)
     c.setFillColor(colors.HexColor("#1a5fb4"))
-    c.drawCentredString(width / 2, 770, "POSTURA")
+    c.drawCentredString(width / 2, 740, "POSTURA")
     c.setFillColor(colors.black)
     c.setFont("Helvetica-Bold", 16)
-    c.drawCentredString(width / 2, 745, "Ergonomics Evaluation Report")
-    y_pos = 710
+    c.drawCentredString(width / 2, 715, "Ergonomics Evaluation Report")
+    y_pos = 680
 
     # === POSTURE ANALYSIS ===
     posture_lines = []
