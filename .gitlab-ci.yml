@@ -1,0 +1,26 @@
+stages:
+  - deploy
+
+deploy-production:
+  stage: deploy
+  image: alpine:latest
+  only:
+    - main
+  before_script:
+    - apk add --no-cache openssh-client bash
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | base64 -d | ssh-add -
+    - mkdir -p ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+  script:
+    - ssh postura@$SERVER_IP "
+        cd /home/postura/ai &&
+        git pull origin main &&
+        source venv/bin/activate &&
+        pip install -r requirements.txt --quiet &&
+        sudo systemctl restart postura-ai &&
+        echo 'AI deployed successfully!'"
+  environment:
+    name: production
+    url: http://63.183.68.119:5002
