@@ -60,28 +60,30 @@ async def root():
     }
 
 
-from fastapi.responses import JSONResponse
-from fastapi import HTTPException
-
 @app.post("/api/analyze-posture")
-async def upload_image(file: UploadFile = File(...), payload: str = Form(...)):
+async def upload_image(
+    #request: Request
+    file: UploadFile = File(...),
+    payload: str = Form(...)
+):
     print("sent file", file)
     print("sent payload", payload)
-
     contents = await file.read()
     np_arr = np.frombuffer(contents, np.uint8)
     img = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
 
     if img is None:
         raise HTTPException(status_code=422, detail="Invalid image file")
-
+    
+    # keep original name
     filename = file.filename
     full_path = os.path.join(FILES_DIR, filename)
-    success = cv2.imwrite(full_path, img)
 
+    success = cv2.imwrite(full_path, img)
+    
     if not success:
         raise HTTPException(status_code=500, detail="Failed to save image")
-
+    
     relative_path = os.path.join("files", filename)
 
     try:
@@ -89,30 +91,24 @@ async def upload_image(file: UploadFile = File(...), payload: str = Form(...)):
         payload.update({"image_data": {"image_path": relative_path}})
         output = analyze_image(payload)
 
-        # Analysis failed
-        if output is None or (isinstance(output, dict) and output.get("success") is False):
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "success": False,
-                    "error_code": "ANALYSIS_FAILED",
-                    "message": "Posture analysis failed unexpectedly.",
-                    "data": None
-                }
-            )
-
-        # Success
-        return JSONResponse(
-            status_code=201,
-            content={
-                "success": True,
-                "data": output
+        if output is None:
+            return {
+                "success": False,
+                "error_code": "ANALYSIS_FAILED",
+                "message": "Posture analysis failed unexpectedly.",
+                "data": None
             }
-        )
+
+        if isinstance(output, dict) and output.get("success") is False:
+            return output
+
+        return {
+            "success": True,
+            "data": output
+        }
 
     except Exception as e:
         print("Error %s" % str(e))
-        raise HTTPException(status_code=500, detail="An error occurred while analyzing the image.")
 
 
 @app.post("/api/analyze-exercises")
