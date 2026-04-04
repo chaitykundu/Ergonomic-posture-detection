@@ -210,7 +210,7 @@ __marimo__/
 # Uploaded files & test images
 files/
 static/uploads/
-
+files/*
 # Output / generated results
 output/
 
