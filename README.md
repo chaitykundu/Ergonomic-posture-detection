@@ -6,6 +6,7 @@ The system detects whether a person has correct or incorrect posture and provide
 
 Features
 ===
+
 Deep Learning-based posture classification
 Image-based posture analysis (extendable to real-time video)
 FastAPI backend for high-performance inference
