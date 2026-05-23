@@ -8,11 +8,17 @@ Features
 ===
 
 Deep Learning-based posture classification
+
 Image-based posture analysis (extendable to real-time video)
+
 FastAPI backend for high-performance inference
+
 Modular and scalable architecture
+
 Preprocessing pipeline for image normalization
+
 Structured API responses for integration with frontend/mobile apps
+
 Debug-friendly logging system
 
 System Architecture
