@@ -1,9 +1,11 @@
 Posture Detection System (AI-Powered)
+===
 
 A real-time AI-powered Posture Detection System that analyzes human posture using computer vision and deep learning. 
 The system detects whether a person has correct or incorrect posture and provides real-time feedback through an API-based backend built with FastAPI.
 
 Features
+===
 Deep Learning-based posture classification
 Image-based posture analysis (extendable to real-time video)
 FastAPI backend for high-performance inference
@@ -13,6 +15,7 @@ Structured API responses for integration with frontend/mobile apps
 Debug-friendly logging system
 
 System Architecture
+===
 
 Client (Web / Mobile / Postman)
           │
@@ -32,9 +35,11 @@ Client (Web / Mobile / Postman)
  Structured JSON Response
 
 Installation & Setup
+===
 1. Clone Repository
 
-git clone https://github.com/your-username/posture-detection.git
+git clone https://github.com/chaitykundu/Ergonomic-posture-detection.git
+
 cd posture-detection
 
 2. Create Virtual Environment
